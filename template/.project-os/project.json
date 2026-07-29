@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "project_name": "{{PROJECT_NAME}}",
+  "canonical_task_system": "filesystem",
+  "external_task_mirror": null,
+  "prefixes": {
+    "task": "TASK",
+    "sprint": "SPRINT",
+    "run": "RUN",
+    "ui": "UI"
+  },
+  "generated_dir": ".project-os/generated",
+  "verification_commands": [],
+  "artifact_policy": {
+    "tracked_final_evidence_max_bytes": 5000000,
+    "raw_artifacts": "external-or-git-lfs"
+  }
+}

@@ -1,0 +1,267 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siso.dev/schemas/project-os/document.schema.json",
+  "title": "SISO Project OS durable document metadata",
+  "description": "Metadata for an authored durable document. Generated projections use their own manifests and can never claim authored authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "document_id",
+    "path",
+    "title",
+    "kind",
+    "domain",
+    "status",
+    "answers_question",
+    "authority_key",
+    "owner",
+    "created_at",
+    "reviewed_at",
+    "review_due_at",
+    "canonical_pointer",
+    "supersedes",
+    "superseded_by",
+    "source_pointers",
+    "evidence",
+    "tags"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "document_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._:-]*$",
+      "description": "Stable logical identifier. Repository-relative path remains the physical identity."
+    },
+    "path": {
+      "$ref": "#/$defs/repoPath"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "kind": {
+      "enum": [
+        "index",
+        "canonical",
+        "spec",
+        "runbook",
+        "research",
+        "audit",
+        "evidence",
+        "memory",
+        "recipe"
+      ]
+    },
+    "domain": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "current",
+        "unverified",
+        "stale",
+        "historical"
+      ]
+    },
+    "answers_question": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 300,
+      "description": "The question a future agent asks to decide whether to open this document."
+    },
+    "authority_key": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._:-]*$"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Topic-level authority slot. At most one current document may own a non-null key."
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "reviewed_at": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "review_due_at": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "canonical_pointer": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/repoPath"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Current authored answer for this topic. Current documents point to themselves; stale documents point forward."
+    },
+    "supersedes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/repoPath"
+      },
+      "uniqueItems": true
+    },
+    "superseded_by": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/repoPath"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source_pointers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "description": "Repository-relative inputs, citations, or public URLs used to author the document."
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grade",
+        "observed_at",
+        "proof_pointers",
+        "verifier"
+      ],
+      "properties": {
+        "grade": {
+          "enum": [
+            "verified_run",
+            "executable_test",
+            "inspection",
+            "sourced_research",
+            "hypothesis",
+            "none"
+          ]
+        },
+        "observed_at": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "proof_pointers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/repoPath"
+          },
+          "uniqueItems": true
+        },
+        "verifier": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]*$"
+      },
+      "uniqueItems": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "current"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "authority_key": {
+            "type": "string"
+          },
+          "canonical_pointer": {
+            "$ref": "#/$defs/repoPath"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "stale"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "superseded_by": {
+            "$ref": "#/$defs/repoPath"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "repoPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[^\\u0000]+$",
+      "description": "Repository-relative POSIX path. Absolute paths, backslashes, and parent traversal are forbidden."
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "id": "UI-0000",
+  "task_id": "TASK-0000",
+  "title": "Replace with the campaign title",
+  "surface": "Replace with the real application surface",
+  "stage": "intent",
+  "intent_path": ".uihub/campaigns/UI-0000/intent/brief.md",
+  "direction_ids": [],
+  "candidate_ids": [],
+  "created_at": "2000-01-01T00:00:00Z",
+  "updated_at": "2000-01-01T00:00:00Z",
+  "history": [
+    {
+      "stage": "intent",
+      "at": "2000-01-01T00:00:00Z",
+      "by": "replace-me",
+      "note": "Campaign created from an existing canonical task."
+    }
+  ]
+}

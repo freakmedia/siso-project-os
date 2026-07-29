@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "id": "RCP-UI-0000-VERIFICATION",
+  "campaign_id": "UI-0000",
+  "task_id": "TASK-0000",
+  "direction_id": "DIR-A",
+  "kind": "verification",
+  "verdict": "blocked",
+  "recorded_at": "2000-01-01T00:00:00Z",
+  "recorded_by": "replace-me",
+  "verification": {
+    "source_commit": "0000000",
+    "checks": [
+      {
+        "name": "real application verification",
+        "command": "replace-with-verification-command",
+        "verdict": "blocked",
+        "note": "Replace this template result with real output."
+      }
+    ],
+    "real_app_observation": {
+      "surface": "Replace with the real application surface",
+      "scenario": "Replace with the verified user scenario",
+      "viewports": [
+        {
+          "name": "wide",
+          "width": 1280,
+          "height": 800
+        },
+        {
+          "name": "narrow",
+          "width": 390,
+          "height": 844
+        }
+      ]
+    },
+    "visual_evidence": [
+      {
+        "kind": "screenshot",
+        "path": ".uihub/campaigns/UI-0000/verified/replace-with-proof.png",
+        "description": "Replace with a screenshot from the running application."
+      }
+    ],
+    "browser_faults": {
+      "console_errors": 0,
+      "page_errors": 0,
+      "broken_assets": 0,
+      "overflow_violations": 0
+    }
+  },
+  "evidence": [],
+  "exceptions": []
+}

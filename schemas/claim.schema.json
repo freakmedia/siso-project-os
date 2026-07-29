@@ -1,0 +1,365 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siso.dev/schemas/project-os/claim.schema.json",
+  "title": "SISO Project OS proof-bearing claim",
+  "description": "Canonical structured proof record. Human-facing proof ledgers are derived from records matching this schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "claim_id",
+    "claim_key",
+    "source_path",
+    "claim",
+    "status",
+    "evidence_grade",
+    "observed_at",
+    "verified_at",
+    "proof_commit",
+    "depends_on",
+    "proof_artifacts",
+    "provenance",
+    "expiry_policy",
+    "supersedes",
+    "superseded_by",
+    "notes"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "claim_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "claim_key": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._:-]*$",
+      "description": "Stable semantic slot used to reconcile competing or superseding claims."
+    },
+    "source_path": {
+      "$ref": "#/$defs/repoPath"
+    },
+    "claim": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 2000
+    },
+    "status": {
+      "enum": [
+        "proposed",
+        "proven",
+        "shipped",
+        "deployed",
+        "stale",
+        "superseded",
+        "broken",
+        "historical"
+      ]
+    },
+    "evidence_grade": {
+      "enum": [
+        "live_observation",
+        "dark_observation",
+        "verified_run",
+        "executable_test",
+        "inspection",
+        "sourced_research",
+        "hypothesis",
+        "none"
+      ]
+    },
+    "observed_at": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "verified_at": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "proof_commit": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{7,40}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/repoPath"
+      },
+      "uniqueItems": true,
+      "description": "Files whose post-proof changes make this claim require review."
+    },
+    "proof_artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      },
+      "uniqueItems": true
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_kind",
+        "source_ref",
+        "method",
+        "verifier"
+      ],
+      "properties": {
+        "source_kind": {
+          "enum": [
+            "run",
+            "test",
+            "inspection",
+            "research",
+            "external"
+          ]
+        },
+        "source_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "method": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "verifier": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
+      }
+    },
+    "expiry_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "review_due_at",
+        "event"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "dependency_change",
+            "time",
+            "event",
+            "manual",
+            "never"
+          ]
+        },
+        "review_due_at": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "event": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "time"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "review_due_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "event"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "event": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "supersedes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+      },
+      "uniqueItems": true
+    },
+    "superseded_by": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 2000
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "proven",
+              "shipped",
+              "deployed"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "evidence_grade": {
+            "enum": [
+              "live_observation",
+              "dark_observation",
+              "verified_run",
+              "executable_test",
+              "inspection",
+              "sourced_research"
+            ]
+          },
+          "verified_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "anyOf": [
+          {
+            "properties": {
+              "proof_commit": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{7,40}$"
+              }
+            }
+          },
+          {
+            "properties": {
+              "proof_artifacts": {
+                "minItems": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "superseded"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "superseded_by": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "repoPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[^\\u0000]+$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "kind",
+        "sha256",
+        "observed_at"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "kind": {
+          "enum": [
+            "receipt",
+            "report",
+            "log",
+            "screenshot",
+            "recording",
+            "dataset",
+            "test-output"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

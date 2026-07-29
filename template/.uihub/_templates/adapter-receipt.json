@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "id": "ADAPTER-RCP-UI-0000-001",
+  "campaign_id": "UI-0000",
+  "task_id": "TASK-0000",
+  "adapter_id": "replace-with-adapter-id",
+  "capability": "image-study",
+  "status": "blocked",
+  "requested_at": "2000-01-01T00:00:00Z",
+  "completed_at": null,
+  "instruction": "Replace with the exact instruction sent to the adapter.",
+  "inputs": [
+    {
+      "path": ".uihub/campaigns/UI-0000/research/reference.png",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "outputs": [],
+  "eligibility": "study_only",
+  "error": "Template receipt has not been replaced with an adapter result."
+}

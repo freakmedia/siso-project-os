@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "DIR-A",
+  "campaign_id": "UI-0000",
+  "task_id": "TASK-0000",
+  "title": "Replace with a memorable direction name",
+  "thesis": "Replace with the design thesis",
+  "divergence_axis": "Replace with the primary structural or interaction difference",
+  "status": "proposed",
+  "eligibility": "review_candidate",
+  "comparison_contract": {
+    "screen_ids": [
+      "primary-screen"
+    ],
+    "copy_fixture": ".uihub/campaigns/UI-0000/research/fixtures/copy.json",
+    "data_fixture": ".uihub/campaigns/UI-0000/research/fixtures/data.json",
+    "shell": ".uihub/campaigns/UI-0000/research/shell.md",
+    "viewports": [
+      {
+        "name": "wide",
+        "width": 1280,
+        "height": 800
+      },
+      {
+        "name": "narrow",
+        "width": 390,
+        "height": 844
+      }
+    ]
+  },
+  "artifacts": [],
+  "origin": {
+    "kind": "authored"
+  },
+  "constraints_satisfied": [],
+  "known_tradeoffs": []
+}

@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siso.dev/schemas/ui-direction.schema.json",
+  "title": "UI Lab design direction",
+  "description": "A distinct, comparable design thesis within a task-linked UI campaign.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "campaign_id",
+    "task_id",
+    "title",
+    "thesis",
+    "divergence_axis",
+    "status",
+    "eligibility",
+    "comparison_contract",
+    "artifacts",
+    "origin"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "$ref": "#/$defs/directionId"
+    },
+    "campaign_id": {
+      "type": "string",
+      "pattern": "^UI-[0-9]{4}$"
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^TASK-[0-9]{4}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "thesis": {
+      "type": "string",
+      "minLength": 1
+    },
+    "divergence_axis": {
+      "description": "The primary structural or interaction idea that makes this direction meaningfully different.",
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["proposed", "candidate", "chosen", "rejected", "superseded"]
+    },
+    "eligibility": {
+      "description": "Generated studies are study_only until a human explicitly promotes them for product review.",
+      "type": "string",
+      "enum": ["review_candidate", "study_only"]
+    },
+    "comparison_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["screen_ids", "copy_fixture", "data_fixture", "shell", "viewports"],
+      "properties": {
+        "screen_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "copy_fixture": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "data_fixture": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "shell": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "viewports": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/viewport"
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "path"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^CAN-[A-Z0-9][A-Z0-9-]*$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["prototype", "image", "flow", "document", "other"]
+          },
+          "path": {
+            "$ref": "#/$defs/relativePath"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "origin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["authored", "generated", "adapted"]
+        },
+        "adapter_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "receipt_path": {
+          "$ref": "#/$defs/relativePath"
+        }
+      }
+    },
+    "constraints_satisfied": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "known_tradeoffs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "directionId": {
+      "type": "string",
+      "pattern": "^DIR-[A-Z0-9][A-Z0-9-]*$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:[\\\\/]).+"
+    },
+    "viewport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "width", "height"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 240
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 240
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": ["candidate", "chosen", "rejected"]
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "artifacts": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "origin": {
+            "properties": {
+              "kind": {
+                "enum": ["generated", "adapted"]
+              }
+            },
+            "required": ["kind"]
+          }
+        },
+        "required": ["origin"]
+      },
+      "then": {
+        "properties": {
+          "origin": {
+            "required": ["adapter_id", "receipt_path"]
+          }
+        }
+      }
+    }
+  ]
+}

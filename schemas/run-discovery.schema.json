@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siso.dev/schemas/project-os/run-discovery.schema.json",
+  "title": "SISO Project OS closed-run discovery receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "run_id",
+    "source_path",
+    "title",
+    "objective",
+    "verdict",
+    "summary",
+    "task_ids",
+    "started_at",
+    "closed_at",
+    "closed_by",
+    "evidence_refs",
+    "tags"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "receipt_id": { "type": "string", "pattern": "^RUN-RECEIPT-[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "run_id": { "type": "string", "pattern": "^(?:RUN|RESEARCH)-[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "source_path": { "$ref": "#/$defs/repoPath" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "objective": { "type": "string", "minLength": 8, "maxLength": 1000 },
+    "verdict": { "enum": ["passed", "failed", "blocked", "cancelled", "inconclusive"] },
+    "summary": { "type": "string", "minLength": 8, "maxLength": 4000 },
+    "task_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^TASK-[0-9]{4}$" }
+    },
+    "started_at": { "type": "string", "format": "date-time" },
+    "closed_at": { "type": "string", "format": "date-time" },
+    "closed_by": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "evidence_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/repoPath" }
+    },
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" }
+    }
+  },
+  "$defs": {
+    "repoPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+    }
+  }
+}

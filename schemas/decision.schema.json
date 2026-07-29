@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siso.dev/schemas/project-os/decision.schema.json",
+  "title": "SISO Project OS decision ledger record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "decision_id",
+    "decision_key",
+    "status",
+    "title",
+    "decision",
+    "rationale",
+    "decided_at",
+    "decided_by",
+    "source_path",
+    "task_ids",
+    "evidence_refs",
+    "supersedes",
+    "superseded_by"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "decision_id": { "type": "string", "pattern": "^DEC-[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "decision_key": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]*$" },
+    "status": { "enum": ["current", "superseded", "reversed", "historical"] },
+    "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "decision": { "type": "string", "minLength": 8, "maxLength": 2000 },
+    "rationale": { "type": "string", "minLength": 8, "maxLength": 4000 },
+    "decided_at": { "type": "string", "format": "date-time" },
+    "decided_by": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "source_path": { "$ref": "#/$defs/repoPath" },
+    "task_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^TASK-[0-9]{4}$" }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/repoPath" }
+    },
+    "supersedes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^DEC-[A-Za-z0-9][A-Za-z0-9._:-]*$" }
+    },
+    "superseded_by": {
+      "oneOf": [
+        { "type": "string", "pattern": "^DEC-[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+        { "type": "null" }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "enum": ["superseded", "reversed"] } }, "required": ["status"] },
+      "then": { "properties": { "superseded_by": { "type": "string" } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "current" } }, "required": ["status"] },
+      "then": { "properties": { "superseded_by": { "type": "null" } } }
+    }
+  ],
+  "$defs": {
+    "repoPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!.*(?:^|/)\\.\\.(?:/|$)).+"
+    }
+  }
+}

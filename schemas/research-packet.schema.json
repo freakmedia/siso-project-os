@@ -1,0 +1,605 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siso.dev/schemas/project-os/research-packet.schema.json",
+  "title": "SISO Project OS research and evidence packet",
+  "description": "A bounded research packet. It records evidence and recommendations but cannot itself become current domain authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "packet_id",
+    "title",
+    "status",
+    "currency",
+    "objective",
+    "research_questions",
+    "scope",
+    "parent_tasks",
+    "owner",
+    "created_at",
+    "updated_at",
+    "methods",
+    "sources",
+    "findings",
+    "coverage",
+    "confidence",
+    "dead_ends",
+    "open_gaps",
+    "recommendations",
+    "evidence_artifacts",
+    "raw_receipts",
+    "clean_room",
+    "closeout"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "packet_id": {
+      "type": "string",
+      "pattern": "^RESEARCH-[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "status": {
+      "enum": [
+        "planned",
+        "active",
+        "synthesized",
+        "closed",
+        "superseded"
+      ]
+    },
+    "currency": {
+      "enum": [
+        "unverified",
+        "dated-evidence",
+        "historical"
+      ],
+      "description": "Research packets can inform current authority but cannot claim it."
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 1000
+    },
+    "research_questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 8
+      },
+      "uniqueItems": true
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "included",
+        "excluded"
+      ],
+      "properties": {
+        "included": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "excluded": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "parent_tasks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "description": "Canonical task IDs. Prefixes remain project-configurable."
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "methods": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/source"
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "queries",
+        "searched_surfaces",
+        "excluded",
+        "incomplete"
+      ],
+      "properties": {
+        "queries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "searched_surfaces": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "excluded": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "incomplete": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "score",
+        "rationale",
+        "raise_by"
+      ],
+      "properties": {
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "raise_by": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "dead_ends": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "lead",
+          "reason",
+          "source_ids"
+        ],
+        "properties": {
+          "lead": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_ids": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/sourceId"
+            },
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "open_gaps": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "recommendation_id",
+          "priority",
+          "target",
+          "rationale",
+          "status"
+        ],
+        "properties": {
+          "recommendation_id": {
+            "type": "string",
+            "pattern": "^R[0-9]{2,}$"
+          },
+          "priority": {
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "proposed",
+              "adopted",
+              "rejected",
+              "deferred"
+            ]
+          }
+        }
+      }
+    },
+    "evidence_artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "raw_receipts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "clean_room": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "restrictions",
+        "licenses_checked"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "read_only_patterns",
+            "licensed_reuse",
+            "original_research",
+            "not_applicable"
+          ]
+        },
+        "restrictions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "licenses_checked": {
+          "type": "boolean"
+        }
+      }
+    },
+    "closeout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "outputs"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "open",
+            "classified"
+          ]
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source_path",
+              "classification",
+              "target_path",
+              "status"
+            ],
+            "properties": {
+              "source_path": {
+                "$ref": "#/$defs/repoPath"
+              },
+              "classification": {
+                "enum": [
+                  "domain_document",
+                  "decision",
+                  "proof_claim",
+                  "task_evidence",
+                  "memory",
+                  "dated_evidence",
+                  "raw_history"
+                ]
+              },
+              "target_path": {
+                "$ref": "#/$defs/repoPath"
+              },
+              "status": {
+                "enum": [
+                  "planned",
+                  "promoted",
+                  "retained",
+                  "archived"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "classified"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "outputs": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "synthesized",
+              "closed"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "findings": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "closed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "closeout": {
+            "properties": {
+              "state": {
+                "const": "classified"
+              },
+              "outputs": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "repoPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[^\\u0000]+$"
+    },
+    "sourceId": {
+      "type": "string",
+      "pattern": "^S[0-9]{2,}$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "kind",
+        "ref",
+        "accessed_at",
+        "verification",
+        "license"
+      ],
+      "properties": {
+        "source_id": {
+          "$ref": "#/$defs/sourceId"
+        },
+        "kind": {
+          "enum": [
+            "repository",
+            "documentation",
+            "paper",
+            "dataset",
+            "interview",
+            "web",
+            "artifact"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "accessed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "verification": {
+          "enum": [
+            "read",
+            "cross_checked",
+            "metadata_only",
+            "unverified"
+          ]
+        },
+        "license": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "finding_id",
+        "statement",
+        "evidence_grade",
+        "source_ids",
+        "confidence",
+        "disposition"
+      ],
+      "properties": {
+        "finding_id": {
+          "type": "string",
+          "pattern": "^F[0-9]{2,}$"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 8
+        },
+        "evidence_grade": {
+          "enum": [
+            "verified_source",
+            "cross_checked",
+            "single_source",
+            "hypothesis"
+          ]
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sourceId"
+          },
+          "uniqueItems": true
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "disposition": {
+          "enum": [
+            "keep",
+            "promote",
+            "defer",
+            "reject",
+            "needs_verification"
+          ]
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "kind"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "kind": {
+          "enum": [
+            "report",
+            "dataset",
+            "journal",
+            "transcript",
+            "screenshot",
+            "recording",
+            "source-snapshot",
+            "other"
+          ]
+        }
+      }
+    }
+  }
+}

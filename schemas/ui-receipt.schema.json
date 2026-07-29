@@ -1,0 +1,325 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siso.dev/schemas/ui-receipt.schema.json",
+  "title": "UI Lab implementation or verification receipt",
+  "description": "Machine-readable evidence that a chosen design reached the real application or was verified there.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "campaign_id",
+    "task_id",
+    "direction_id",
+    "kind",
+    "verdict",
+    "recorded_at",
+    "recorded_by",
+    "evidence",
+    "exceptions"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^RCP-UI-[0-9]{4}-[A-Z0-9][A-Z0-9-]*$"
+    },
+    "campaign_id": {
+      "type": "string",
+      "pattern": "^UI-[0-9]{4}$"
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^TASK-[0-9]{4}$"
+    },
+    "direction_id": {
+      "type": "string",
+      "pattern": "^DIR-[A-Z0-9][A-Z0-9-]*$"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["implementation", "verification"]
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["pass", "fail", "blocked", "partial"]
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recorded_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "implementation": {
+      "$ref": "#/$defs/implementation"
+    },
+    "verification": {
+      "$ref": "#/$defs/verification"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "exceptions": {
+      "description": "Approved gaps. An empty array means no exceptions were used.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["check", "reason", "approved_by"],
+        "properties": {
+          "check": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approved_by": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:[\\\\/]).+"
+    },
+    "commandResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "command", "verdict"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verdict": {
+          "type": "string",
+          "enum": ["pass", "fail", "blocked"]
+        },
+        "evidence_path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "viewport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "width", "height"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 240
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 240
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surface", "scenario", "viewports"],
+      "properties": {
+        "surface": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scenario": {
+          "type": "string",
+          "minLength": 1
+        },
+        "viewports": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/viewport"
+          }
+        }
+      }
+    },
+    "implementation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_paths", "changed_files", "source_commit", "checks", "real_app_observation", "deviations", "unresolved"],
+      "properties": {
+        "target_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/relativePath"
+          }
+        },
+        "changed_files": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/relativePath"
+          }
+        },
+        "source_commit": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-fA-F]{7,64}$"
+        },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/commandResult"
+          }
+        },
+        "real_app_observation": {
+          "$ref": "#/$defs/observation"
+        },
+        "deviations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_commit", "checks", "real_app_observation", "visual_evidence", "browser_faults"],
+      "properties": {
+        "source_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{7,64}$"
+        },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/commandResult"
+          }
+        },
+        "real_app_observation": {
+          "$ref": "#/$defs/observation"
+        },
+        "visual_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "browser_faults": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["console_errors", "page_errors", "broken_assets", "overflow_violations"],
+          "properties": {
+            "console_errors": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "page_errors": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "broken_assets": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "overflow_violations": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "description"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["screenshot", "video", "log", "report", "test", "other"]
+        },
+        "path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{64}$"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "implementation"
+          }
+        },
+        "required": ["kind"]
+      },
+      "then": {
+        "required": ["implementation"],
+        "not": {
+          "required": ["verification"]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "verification"
+          }
+        },
+        "required": ["kind"]
+      },
+      "then": {
+        "required": ["verification"],
+        "not": {
+          "required": ["implementation"]
+        }
+      }
+    }
+  ]
+}

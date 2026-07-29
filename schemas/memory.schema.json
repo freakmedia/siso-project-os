@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siso.dev/schemas/project-os/memory.schema.json",
+  "title": "SISO Project OS Memory Frontmatter",
+  "description": "Normalized metadata for one durable project fact stored as Markdown.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "slug",
+    "name",
+    "description",
+    "status",
+    "created_at",
+    "metadata",
+    "evidence",
+    "related"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "superseded", "retracted"]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_verified_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "scope"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["fact", "lesson", "trap", "recipe", "decision_reference"]
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["project", "domain"]
+        },
+        "domain": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ref", "description", "grade", "observed_at"],
+        "properties": {
+          "ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "grade": {
+            "type": "string",
+            "enum": ["observed", "verified", "inferred", "unverified"]
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dependency_paths": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "related": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tasks", "memories", "decisions"],
+      "properties": {
+        "tasks": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^TASK-[0-9]{4}$"
+          }
+        },
+        "memories": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          }
+        },
+        "decisions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "superseded_by": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "retraction_reason": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "superseded"
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["superseded_by"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "retracted"
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["retraction_reason"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "scope": {
+                "const": "domain"
+              }
+            },
+            "required": ["scope"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "metadata": {
+            "required": ["domain"]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "campaign_id": "UI-0000",
+  "task_id": "TASK-0000",
+  "audience": "Replace with the primary audience",
+  "primary_action": "Replace with the primary action",
+  "screen_ids": [
+    "primary-screen"
+  ],
+  "copy_fixture": ".uihub/campaigns/UI-0000/research/fixtures/copy.json",
+  "data_fixture": ".uihub/campaigns/UI-0000/research/fixtures/data.json",
+  "shell": ".uihub/campaigns/UI-0000/research/shell.md",
+  "viewports": [
+    {
+      "name": "wide",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "compact",
+      "width": 768,
+      "height": 900
+    },
+    {
+      "name": "narrow",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "required_states": [
+    "default",
+    "loading",
+    "empty",
+    "error"
+  ],
+  "accessibility": [
+    "Keyboard access for every interactive control",
+    "Visible focus treatment",
+    "Semantic names for controls and regions"
+  ],
+  "do_not_change": [
+    "Replace with product behavior that must remain stable"
+  ]
+}

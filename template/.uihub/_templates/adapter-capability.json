@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "adapter_id": "replace-with-adapter-id",
+  "capability": "image-study",
+  "available": false,
+  "credential_mode": "external",
+  "inputs": {
+    "accepted": [
+      "text-instruction",
+      "reference-image"
+    ],
+    "maximum_reference_count": 1
+  },
+  "outputs": {
+    "media_types": [
+      "image/png"
+    ],
+    "default_eligibility": "study_only",
+    "background_handling": "record-in-receipt"
+  },
+  "receipt_required": true,
+  "notes": "Describe limits and fallback behavior. Do not include credentials."
+}

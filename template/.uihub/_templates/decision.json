@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "id": "DEC-UI-0000-001",
+  "campaign_id": "UI-0000",
+  "task_id": "TASK-0000",
+  "chosen_direction_id": "DIR-A",
+  "rejected_direction_ids": [
+    "DIR-B"
+  ],
+  "rationale": "Replace with the reason this direction best serves the audience, constraints, and primary action.",
+  "approver": {
+    "name": "replace-me",
+    "role": "product owner"
+  },
+  "approved_at": "2000-01-01T00:00:00Z",
+  "review_response": ".uihub/campaigns/UI-0000/review/response.json",
+  "implementation_target": {
+    "surface": "Replace with the real application surface",
+    "paths": [
+      "src/path/to/surface"
+    ],
+    "acceptance": [
+      "Replace with an observable acceptance condition"
+    ]
+  },
+  "verbatim_notes": [],
+  "exceptions": []
+}

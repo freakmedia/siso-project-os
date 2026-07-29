@@ -1,0 +1,282 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siso.dev/schemas/ui-campaign.schema.json",
+  "title": "UI Lab campaign",
+  "description": "Canonical state for a task-linked UI design and verification campaign.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "task_id",
+    "title",
+    "surface",
+    "stage",
+    "intent_path",
+    "direction_ids",
+    "candidate_ids",
+    "created_at",
+    "updated_at",
+    "history"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^UI-[0-9]{4}$"
+    },
+    "task_id": {
+      "description": "ID of the canonical task under .agents/tasks. This campaign is never a second backlog.",
+      "type": "string",
+      "pattern": "^TASK-[0-9]{4}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "surface": {
+      "description": "Stable name for the real application surface being changed.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "stage": {
+      "$ref": "#/$defs/stage"
+    },
+    "intent_path": {
+      "$ref": "#/$defs/relativePath"
+    },
+    "research_path": {
+      "$ref": "#/$defs/relativePath"
+    },
+    "direction_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/directionId"
+      },
+      "uniqueItems": true
+    },
+    "candidate_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^CAN-[A-Z0-9][A-Z0-9-]*$"
+      },
+      "uniqueItems": true
+    },
+    "review_path": {
+      "$ref": "#/$defs/relativePath"
+    },
+    "decision_record": {
+      "$ref": "#/$defs/relativePath"
+    },
+    "implementation_receipt": {
+      "$ref": "#/$defs/relativePath"
+    },
+    "verification_receipt": {
+      "$ref": "#/$defs/relativePath"
+    },
+    "superseded": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["at", "by", "reason"],
+      "properties": {
+        "at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "replacement_campaign_id": {
+          "type": "string",
+          "pattern": "^UI-[0-9]{4}$"
+        }
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "history": {
+      "description": "Append-only campaign transition log.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["stage", "at", "by"],
+        "properties": {
+          "stage": {
+            "$ref": "#/$defs/stage"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "by": {
+            "type": "string",
+            "minLength": 1
+          },
+          "receipt": {
+            "$ref": "#/$defs/relativePath"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "stage": {
+      "type": "string",
+      "enum": [
+        "intent",
+        "research",
+        "directions",
+        "candidates",
+        "review",
+        "decided",
+        "implemented",
+        "verified",
+        "superseded"
+      ]
+    },
+    "directionId": {
+      "type": "string",
+      "pattern": "^DIR-[A-Z0-9][A-Z0-9-]*$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:[\\\\/]).+"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "stage": {
+            "enum": ["research", "directions", "candidates", "review", "decided", "implemented", "verified"]
+          }
+        },
+        "required": ["stage"]
+      },
+      "then": {
+        "required": ["research_path"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "stage": {
+            "enum": ["directions", "candidates", "review", "decided", "implemented", "verified"]
+          }
+        },
+        "required": ["stage"]
+      },
+      "then": {
+        "properties": {
+          "direction_ids": {
+            "minItems": 2
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "stage": {
+            "enum": ["candidates", "review", "decided", "implemented", "verified"]
+          }
+        },
+        "required": ["stage"]
+      },
+      "then": {
+        "properties": {
+          "candidate_ids": {
+            "minItems": 2
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "stage": {
+            "enum": ["review", "decided", "implemented", "verified"]
+          }
+        },
+        "required": ["stage"]
+      },
+      "then": {
+        "required": ["review_path"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "stage": {
+            "enum": ["decided", "implemented", "verified"]
+          }
+        },
+        "required": ["stage"]
+      },
+      "then": {
+        "required": ["decision_record"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "stage": {
+            "enum": ["implemented", "verified"]
+          }
+        },
+        "required": ["stage"]
+      },
+      "then": {
+        "required": ["implementation_receipt"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "stage": {
+            "const": "verified"
+          }
+        },
+        "required": ["stage"]
+      },
+      "then": {
+        "required": ["verification_receipt"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "stage": {
+            "const": "superseded"
+          }
+        },
+        "required": ["stage"]
+      },
+      "then": {
+        "required": ["superseded"]
+      }
+    }
+  ]
+}

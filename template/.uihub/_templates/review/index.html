@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>UI campaign review</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        line-height: 1.5;
+      }
+
+      body {
+        margin: 0;
+        background: Canvas;
+        color: CanvasText;
+      }
+
+      main {
+        width: min(72rem, calc(100% - 2rem));
+        margin: 0 auto;
+        padding: 3rem 0 5rem;
+      }
+
+      .eyebrow {
+        margin: 0;
+        color: GrayText;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0.35rem 0;
+        font-size: clamp(2rem, 5vw, 4rem);
+        line-height: 1;
+      }
+
+      .context,
+      fieldset,
+      .response {
+        margin-top: 2rem;
+        padding: 1.25rem;
+        border: 1px solid color-mix(in srgb, CanvasText 24%, transparent);
+        border-radius: 1rem;
+      }
+
+      .context dl {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 0.4rem 1rem;
+        margin: 0;
+      }
+
+      .context dt {
+        color: GrayText;
+      }
+
+      .context dd {
+        margin: 0;
+      }
+
+      fieldset {
+        padding-top: 1rem;
+      }
+
+      legend {
+        padding: 0 0.5rem;
+        font-weight: 800;
+      }
+
+      .directions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+        gap: 1rem;
+      }
+
+      .direction {
+        display: grid;
+        gap: 0.75rem;
+        padding: 1rem;
+        border: 2px solid color-mix(in srgb, CanvasText 18%, transparent);
+        border-radius: 0.8rem;
+        cursor: pointer;
+      }
+
+      .direction:has(input:checked) {
+        border-color: Highlight;
+        box-shadow: 0 0 0 3px color-mix(in srgb, Highlight 20%, transparent);
+      }
+
+      .direction input {
+        width: 1.15rem;
+        height: 1.15rem;
+      }
+
+      .artifact {
+        display: grid;
+        min-height: 12rem;
+        place-items: center;
+        border-radius: 0.55rem;
+        background: color-mix(in srgb, CanvasText 8%, Canvas);
+        color: GrayText;
+        text-align: center;
+      }
+
+      .direction h2,
+      .direction p {
+        margin: 0;
+      }
+
+      .response {
+        display: grid;
+        gap: 1rem;
+      }
+
+      label span {
+        display: block;
+        margin-bottom: 0.35rem;
+        font-weight: 700;
+      }
+
+      textarea,
+      input[type="text"] {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid color-mix(in srgb, CanvasText 30%, transparent);
+        border-radius: 0.5rem;
+        background: Canvas;
+        color: CanvasText;
+        font: inherit;
+      }
+
+      button {
+        width: fit-content;
+        padding: 0.8rem 1.1rem;
+        border: 0;
+        border-radius: 999px;
+        background: Highlight;
+        color: HighlightText;
+        font: inherit;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .notice {
+        color: GrayText;
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 32rem) {
+        main {
+          width: min(100% - 1rem, 72rem);
+          padding-top: 1.5rem;
+        }
+
+        .context dl {
+          grid-template-columns: 1fr;
+        }
+
+        .context dd + dt {
+          margin-top: 0.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main data-campaign-id="UI-0000" data-task-id="TASK-0000">
+      <p class="eyebrow">Static review · replace all placeholders</p>
+      <h1>Campaign title</h1>
+      <p>Review the same screen, copy, data, shell, and viewport across meaningfully different directions.</p>
+
+      <section class="context" aria-labelledby="context-title">
+        <h2 id="context-title">Decision context</h2>
+        <dl>
+          <dt>Audience</dt>
+          <dd>Replace with the primary audience</dd>
+          <dt>Primary action</dt>
+          <dd>Replace with the primary action</dd>
+          <dt>Screen and state</dt>
+          <dd>Replace with the shared screen and state</dd>
+          <dt>Viewport</dt>
+          <dd>Replace with the shared viewport</dd>
+        </dl>
+      </section>
+
+      <form id="review-form">
+        <fieldset>
+          <legend>Choose one direction</legend>
+          <div class="directions">
+            <label class="direction">
+              <input type="radio" name="direction" value="DIR-A" required>
+              <span class="artifact">Replace with Direction A artifact</span>
+              <h2>Direction A</h2>
+              <p>Replace with the thesis and primary tradeoff.</p>
+            </label>
+            <label class="direction">
+              <input type="radio" name="direction" value="DIR-B" required>
+              <span class="artifact">Replace with Direction B artifact</span>
+              <h2>Direction B</h2>
+              <p>Replace with the thesis and primary tradeoff.</p>
+            </label>
+            <label class="direction">
+              <input type="radio" name="direction" value="DIR-C" required>
+              <span class="artifact">Replace with Direction C artifact</span>
+              <h2>Direction C</h2>
+              <p>Replace with the thesis and primary tradeoff.</p>
+            </label>
+          </div>
+        </fieldset>
+
+        <section class="response" aria-labelledby="response-title">
+          <h2 id="response-title">Record the review</h2>
+          <label>
+            <span>Reviewer</span>
+            <input type="text" name="reviewer" autocomplete="name" required>
+          </label>
+          <label>
+            <span>Verbatim notes</span>
+            <textarea name="notes" rows="6" placeholder="Write the reviewer's words without interpretation."></textarea>
+          </label>
+          <button type="submit">Download response JSON</button>
+          <p class="notice">This page does not write to a server. Commit the downloaded response under this campaign's review directory, then create the durable decision record separately.</p>
+        </section>
+      </form>
+    </main>
+
+    <script>
+      const form = document.querySelector('#review-form');
+      const main = document.querySelector('main');
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const data = new FormData(form);
+        const selectedDirectionId = String(data.get('direction'));
+        const allDirectionIds = [...form.querySelectorAll('input[name="direction"]')]
+          .map((input) => input.value);
+        const response = {
+          schema_version: 1,
+          campaign_id: main.dataset.campaignId,
+          task_id: main.dataset.taskId,
+          selected_direction_id: selectedDirectionId,
+          rejected_direction_ids: allDirectionIds.filter((id) => id !== selectedDirectionId),
+          reviewer: String(data.get('reviewer')).trim(),
+          recorded_at: new Date().toISOString(),
+          verbatim_notes: String(data.get('notes')).split('\n').filter(Boolean)
+        };
+        const blob = new Blob([`${JSON.stringify(response, null, 2)}\n`], {
+          type: 'application/json'
+        });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${response.campaign_id}-review-response.json`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      });
+    </script>
+  </body>
+</html>

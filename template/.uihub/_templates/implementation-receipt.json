@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "id": "RCP-UI-0000-IMPLEMENTATION",
+  "campaign_id": "UI-0000",
+  "task_id": "TASK-0000",
+  "direction_id": "DIR-A",
+  "kind": "implementation",
+  "verdict": "blocked",
+  "recorded_at": "2000-01-01T00:00:00Z",
+  "recorded_by": "replace-me",
+  "implementation": {
+    "target_paths": [
+      "src/path/to/surface"
+    ],
+    "changed_files": [],
+    "source_commit": null,
+    "checks": [
+      {
+        "name": "closest project check",
+        "command": "replace-with-project-command",
+        "verdict": "blocked",
+        "note": "Replace this template result with real output."
+      }
+    ],
+    "real_app_observation": {
+      "surface": "Replace with the real application surface",
+      "scenario": "Replace with the observed user scenario",
+      "viewports": [
+        {
+          "name": "narrow",
+          "width": 390,
+          "height": 844
+        }
+      ]
+    },
+    "deviations": [],
+    "unresolved": [
+      "Template receipt has not been replaced with implementation evidence."
+    ]
+  },
+  "evidence": [],
+  "exceptions": []
+}

@@ -1,0 +1,467 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siso.dev/schemas/project-os/task.schema.json",
+  "title": "SISO Project OS Task",
+  "description": "Canonical current state for one project work item.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "title",
+    "status",
+    "priority",
+    "domain",
+    "category",
+    "created_at",
+    "created_by",
+    "requires_human",
+    "dependencies",
+    "spec",
+    "evidence",
+    "verification"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "$ref": "#/$defs/taskId"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240
+    },
+    "status": {
+      "$ref": "#/$defs/taskStatus"
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"]
+    },
+    "domain": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "category": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "claimed_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "requires_human": {
+      "type": "boolean"
+    },
+    "human_gate_reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dependencies": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/taskId"
+      }
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "description",
+        "objectives",
+        "acceptance_criteria",
+        "files_affected"
+      ],
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "objectives": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "files_affected": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "context": {
+          "type": "string"
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "verification": {
+      "$ref": "#/$defs/verification"
+    },
+    "blocker": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reason", "since"],
+          "properties": {
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            },
+            "since": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "requires": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "completion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["completed_at", "completed_by", "summary", "evidence_refs"],
+      "properties": {
+        "completed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completed_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "cancellation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cancelled_at", "cancelled_by", "reason"],
+      "properties": {
+        "cancelled_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "cancelled_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "archive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["archived_at", "archived_by", "reason", "previous_folder"],
+      "properties": {
+        "archived_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "archived_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "previous_folder": {
+          "type": "string",
+          "enum": ["completed", "cancelled"]
+        }
+      }
+    },
+    "sprint_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/sprintId"
+      }
+    },
+    "run_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/runId"
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "stage"],
+      "properties": {
+        "profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stage": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "requires_human": {
+            "const": true
+          }
+        },
+        "required": ["requires_human"]
+      },
+      "then": {
+        "required": ["human_gate_reason"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "in_progress"
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["owner", "claimed_at"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "blocked"
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["owner", "claimed_at", "blocker"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "completed"
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["completion"],
+        "properties": {
+          "verification": {
+            "properties": {
+              "state": {
+                "enum": ["passed", "waived"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "cancelled"
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["cancellation"]
+      }
+    }
+  ],
+  "$defs": {
+    "taskId": {
+      "type": "string",
+      "pattern": "^TASK-[0-9]{4}$"
+    },
+    "sprintId": {
+      "type": "string",
+      "pattern": "^SPRINT-[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9][a-z0-9-]*$"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^RUN-[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9][a-z0-9-]*$"
+    },
+    "taskStatus": {
+      "type": "string",
+      "enum": ["backlog", "in_progress", "blocked", "completed", "cancelled"]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "description", "grade", "observed_at"],
+      "properties": {
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "grade": {
+          "type": "string",
+          "enum": ["observed", "verified", "inferred", "unverified"]
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dependency_paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "commands", "evidence_refs"],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["unverified", "pending", "passed", "failed", "waived"]
+        },
+        "verified_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "verified_by": {
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["command", "exit_code"],
+            "properties": {
+              "command": {
+                "type": "string",
+                "minLength": 1
+              },
+              "exit_code": {
+                "type": "integer"
+              },
+              "output_ref": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "waiver_reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": ["passed", "failed", "waived"]
+              }
+            },
+            "required": ["state"]
+          },
+          "then": {
+            "required": ["verified_at", "verified_by"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "waived"
+              }
+            },
+            "required": ["state"]
+          },
+          "then": {
+            "required": ["waiver_reason"]
+          }
+        }
+      ]
+    }
+  }
+}
