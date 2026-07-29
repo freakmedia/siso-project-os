@@ -9,15 +9,17 @@ import {
   schemasRoot,
   templateRoot,
 } from './shared.mjs'
-import { buildProject } from './build.mjs'
+import { buildProject, projectSnapshot } from './build.mjs'
 import { checkProject } from './check.mjs'
+import { formatOnboardingReport, onboardingReport } from './console.mjs'
 import { closeRun, createRun, createSprint, createTask, updateTask } from './work.mjs'
 import { advanceUiCampaign, createUiCampaign } from './ui.mjs'
 
 const HELP = `SISO Project OS
 
 Usage:
-  project-os init [path] [--name <name>] [--dry-run]
+  project-os init [path] [--name <name>] [--summary <text>] [--outcome <text>] [--dry-run]
+  project-os onboard [path] [--json]
   project-os check [path] [--json]
   project-os build [path]
   project-os task create --title <title> [options]
@@ -48,9 +50,15 @@ async function initProject(tokens) {
   const { positional, flags } = parseArgs(tokens)
   const root = resolve(positional[0] ?? process.cwd())
   const name = typeof flags.name === 'string' ? flags.name : basename(root)
+  const summary = typeof flags.summary === 'string' ? flags.summary.trim() : ''
+  const outcome = typeof flags.outcome === 'string' ? flags.outcome.trim() : ''
   const dryRun = flags['dry-run'] === true
   const existingAgentRules = await pathExists(join(root, 'AGENTS.md'))
-  const replacements = { '{{PROJECT_NAME}}': name }
+  const replacements = {
+    '{{PROJECT_NAME}}': name,
+    '{{PROJECT_SUMMARY_JSON}}': JSON.stringify(summary),
+    '{{DESIRED_OUTCOME_JSON}}': JSON.stringify(outcome),
+  }
 
   await copyRenderedTree(templateRoot, root, replacements, {
     dryRun: true,
@@ -102,10 +110,17 @@ export async function main(argv) {
   }
   if (command === 'init') return initProject(argv.slice(1))
 
-  if (command === 'check' || command === 'build') {
+  if (command === 'onboard' || command === 'check' || command === 'build') {
     const { positional, flags } = parseArgs(argv.slice(1))
     const root = resolve(positional[0] ?? (typeof flags.root === 'string' ? flags.root : process.cwd()))
     await assertInitialized(root)
+    if (command === 'onboard') {
+      const checked = await checkProject(root)
+      const report = onboardingReport(root, await projectSnapshot(root), checked)
+      print(flags.json === true ? report : formatOnboardingReport(report), flags.json === true)
+      if (!report.ok) process.exitCode = 1
+      return
+    }
     if (command === 'build') {
       const outputs = await buildProject(root)
       print({ ok: true, outputs: Object.keys(outputs) }, flags.json === true)

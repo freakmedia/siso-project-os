@@ -1,6 +1,8 @@
 {
   "schema_version": 1,
   "project_name": "{{PROJECT_NAME}}",
+  "project_summary": {{PROJECT_SUMMARY_JSON}},
+  "desired_outcome": {{DESIRED_OUTCOME_JSON}},
   "canonical_task_system": "filesystem",
   "external_task_mirror": null,
   "prefixes": {

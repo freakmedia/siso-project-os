@@ -6,10 +6,15 @@ This repository uses SISO Project OS for project-local agent state.
 
 ## Start here
 
-1. `PROJECT-OS.md` — where each kind of project truth lives.
-2. `.agents/tasks/` — canonical work registry.
-3. `docs/project-os/README.md` — knowledge-spine rules.
-4. `.uihub/README.md` — task-linked UI campaign workflow.
+1. Read this `AGENTS.md` — binding repository rules.
+2. Read `PROJECT-OS.md` — where each kind of project truth lives.
+3. Run `project-os onboard --json` — project health, human gates, and unblocked next work.
+4. Open the selected canonical `.agents/tasks/.../task.json` before acting.
+5. Create or use its linked run packet for a substantial attempt.
+6. Verify, run `project-os check`, and hand off from repository evidence.
+
+Humans can open `.project-os/generated/onboarding.html` for the same delivery map. The knowledge
+spine rules live at `docs/project-os/README.md`; task-linked UI work lives at `.uihub/README.md`.
 
 ## Binding rules
 
@@ -21,4 +26,5 @@ This repository uses SISO Project OS for project-local agent state.
 - UI campaigns reference canonical task IDs and cannot own an independent backlog.
 - Preserve unrelated dirty work and verify completion from repository evidence, not an agent claim.
 
-Run `npx github:sisodias/siso-project-os check .` before handoff.
+Run `project-os check .` before handoff. If the command is not installed locally, use
+`npx github:sisodias/siso-project-os check .`.

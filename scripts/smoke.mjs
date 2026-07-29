@@ -27,6 +27,10 @@ try {
   run(['build', root])
   const checked = JSON.parse(run(['check', root, '--json']).stdout)
   if (!checked.ok) throw new Error(JSON.stringify(checked, null, 2))
+  const onboarded = JSON.parse(run(['onboard', root, '--json']).stdout)
+  if (!onboarded.ok || onboarded.guide !== '.project-os/generated/onboarding.html') {
+    throw new Error(`unexpected onboarding report: ${JSON.stringify(onboarded)}`)
+  }
   const index = JSON.parse(await readFile(join(root, '.project-os', 'generated', 'project-index.json'), 'utf8'))
   if (index.counts.tasks !== 1 || index.counts.sprints !== 1 || index.counts.runs !== 1 || index.counts.campaigns !== 1) {
     throw new Error(`unexpected smoke counts: ${JSON.stringify(index.counts)}`)

@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises'
 import { basename, extname, join } from 'node:path'
 import { listDirectories, pathExists, readJson, walkFiles, writeJsonAtomic } from './shared.mjs'
 import { scanTasks } from './work.mjs'
+import { renderOnboardingHtml } from './console.mjs'
 
 function htmlEscape(value) {
   return String(value).replace(/[&<>"']/g, (character) => ({
@@ -72,7 +73,7 @@ export async function docsCorpus(root) {
   const inputDigest = sha256(JSON.stringify(inputs))
   const payload = {
     schema_version: 1,
-    generator: 'siso-project-os@0.1.0/docs-corpus',
+    generator: 'siso-project-os@0.2.0/docs-corpus',
     source_commit: sourceCommit(root),
     inputs,
     input_digest: inputDigest,
@@ -82,6 +83,7 @@ export async function docsCorpus(root) {
 }
 
 export async function projectSnapshot(root) {
+  const project = await readJson(join(root, '.project-os', 'project.json'))
   const taskEntries = await scanTasks(root)
   const tasks = taskEntries.map((entry) => ({
     id: entry.task?.id ?? entry.name,
@@ -89,6 +91,11 @@ export async function projectSnapshot(root) {
     status: entry.task?.status ?? null,
     priority: entry.task?.priority ?? null,
     domain: entry.task?.domain ?? null,
+    owner: entry.task?.owner ?? null,
+    dependencies: entry.task?.dependencies ?? [],
+    requires_human: entry.task?.requires_human ?? false,
+    human_gate_reason: entry.task?.human_gate_reason ?? null,
+    blocker: entry.task?.blocker ?? null,
     folder: entry.folder,
     path: `.agents/tasks/${entry.folder}/${entry.name}/task.json`,
     invalid: Boolean(entry.parseError),
@@ -100,6 +107,9 @@ export async function projectSnapshot(root) {
   const payload = {
     schema_version: 1,
     source: 'siso-project-os',
+    project_name: project.project_name,
+    project_summary: project.project_summary,
+    desired_outcome: project.desired_outcome,
     tasks,
     sprints,
     runs,
@@ -114,7 +124,7 @@ export async function projectSnapshot(root) {
     },
   }
   const generation = {
-    generator: 'siso-project-os@0.1.0/project-index',
+    generator: 'siso-project-os@0.2.0/project-index',
     source_commit: sourceCommit(root),
     input_digest: sha256(JSON.stringify(payload)),
   }
@@ -139,6 +149,7 @@ export async function expectedBuild(root) {
   return {
     '.project-os/generated/project-index.json': `${JSON.stringify(snapshot, null, 2)}\n`,
     '.project-os/generated/project-index.html': `${renderProjectHtml(snapshot)}\n`,
+    '.project-os/generated/onboarding.html': `${renderOnboardingHtml(snapshot)}\n`,
     '.project-os/generated/docs-corpus.json': `${JSON.stringify(corpus, null, 2)}\n`,
   }
 }

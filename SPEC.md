@@ -1,4 +1,4 @@
-# SISO Project OS v0.1 Specification
+# SISO Project OS v0.2 Specification
 
 Status: implementation contract
 Date: 2026-07-29
@@ -31,6 +31,14 @@ can initialize and validate any software repository without importing Oracle's p
 | Decision | `docs/decisions/` | decision index |
 | UI campaign | `.uihub/campaigns/UI-*/campaign.json` | galleries/review pages |
 | Generated state | `.project-os/generated/` | never canonical |
+
+The generated onboarding cockpit is the shared cold-pickup and delivery-trunk view. It derives
+human attention from explicit task gates, blocked tasks, and UI review state; it derives next work
+only from unblocked tasks whose dependencies are complete. Those queues are projections and never
+become alternate writers.
+
+Project configuration carries a timeless summary and desired user outcome so cold agents know
+why the repository exists without copying volatile status into a boot document.
 
 ## Work lifecycle
 
@@ -80,11 +88,13 @@ Image generation and third-party design tools are optional adapters.
 ## Governance commands
 
 - `init` installs the starter tree without overwriting collisions.
+- `onboard` is read-only and returns project health, human gates, unblocked next work, and the
+  path to the generated human cockpit.
 - `check` is read-only and validates structure, schemas, references, duplicate IDs, lifecycle
   agreement, canonical routes, generated drift, proof metadata, and UI/task links.
 - `build` regenerates projections only under declared generated outputs.
 - `task create|update`, `sprint create`, `run create|close`, and `ui create|advance` are the only
-  supported state mutations in v0.1.
+  supported state mutations in v0.2.
 - `repair` is explicit, narrowly targeted, and not invoked by hooks or CI.
 
 ## Acceptance criteria
@@ -99,3 +109,5 @@ Image generation and third-party design tools are optional adapters.
 5. No source file contains Oracle platform names, credentials, absolute user paths, or copied
    customer/product evidence outside the provenance document.
 6. The GitHub repository is pushed and can be installed from its URL into a new temporary project.
+7. `onboard --json` is byte-read-only and its generated HTML exposes stable DOM contracts for the
+   agent boot path, human-attention queue, next work, delivery trunk, truth map, and commands.

@@ -6,6 +6,7 @@ import { dirname, join, resolve } from 'node:path'
 import { spawn, spawnSync } from 'node:child_process'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
+import { renderOnboardingHtml } from '../src/console.mjs'
 import { walkFiles } from '../src/shared.mjs'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -29,10 +30,10 @@ function runAsync(args) {
   })
 }
 
-async function project(t, name = 'fixture') {
+async function project(t, name = 'fixture', initOptions = []) {
   const root = await mkdtemp(join(tmpdir(), 'siso-project-os-test-'))
   t.after(() => rm(root, { recursive: true, force: true }))
-  run(['init', root, '--name', name])
+  run(['init', root, '--name', name, ...initOptions])
   return root
 }
 
@@ -55,14 +56,110 @@ test('clean adoption supports the core task, sprint, run, and UI lifecycle', asy
   const runRecord = JSON.parse(run(['run', 'create', '--root', root, '--title', 'Golden run', '--task', created.id, '--json']).stdout)
   const closedRun = JSON.parse(run(['run', 'close', '--root', root, runRecord.id, '--by', 'test', '--verdict', 'passed', '--summary', 'Run landed', '--json']).stdout)
   assert.equal(closedRun.status, 'completed')
+  run(['run', 'create', '--root', root, '--title', 'Golden open run', '--task', created.id])
   run(['ui', 'create', '--root', root, '--title', 'Golden UI', '--task', created.id])
   const checked = JSON.parse(run(['check', root, '--json']).stdout)
   assert.equal(checked.ok, true)
   const index = JSON.parse(await readFile(join(root, '.project-os', 'generated', 'project-index.json'), 'utf8'))
-  assert.deepEqual(index.counts, { tasks: 1, sprints: 1, runs: 1, campaigns: 1, docs: index.counts.docs })
+  assert.deepEqual(index.counts, { tasks: 1, sprints: 1, runs: 2, campaigns: 1, docs: index.counts.docs })
   const corpus = JSON.parse(await readFile(join(root, '.project-os', 'generated', 'docs-corpus.json'), 'utf8'))
   assert.equal(corpus.documents.length, index.counts.docs)
   assert.match(corpus.input_digest, /^[a-f0-9]{64}$/)
+  const onboarding = await readFile(join(root, '.project-os', 'generated', 'onboarding.html'), 'utf8')
+  assert.match(onboarding, /Golden fixture · Project OS/)
+  assert.match(onboarding, /Golden sprint/)
+  assert.match(onboarding, /Golden open run/)
+  for (const contract of ['agent-start', 'human-attention', 'next-work', 'delivery-trunk', 'truth-map', 'commands']) {
+    assert.match(onboarding, new RegExp(`data-contract="${contract}"`))
+  }
+  assert.match(onboarding, /id="project-os-state" type="application\/json"/)
+})
+
+test('onboard is read-only and projects human attention separately from unblocked next work', async (t) => {
+  const root = await project(t, 'Operator fixture', [
+    '--summary', 'Release coordination system',
+    '--outcome', 'Every release has a proven landing receipt',
+  ])
+  const human = JSON.parse(run(['task', 'create', '--root', root, '--title', 'Choose launch window', '--requires-human', '--human-reason', 'Shaan must choose the date', '--json']).stdout)
+  const ready = JSON.parse(run(['task', 'create', '--root', root, '--title', 'Prepare release notes', '--priority', 'high', '--json']).stdout)
+  const blocked = JSON.parse(run(['task', 'create', '--root', root, '--title', 'Publish release', '--json']).stdout)
+  run(['task', 'update', '--root', root, blocked.id, '--by', 'test', '--status', 'in_progress', '--log', 'started'])
+  run(['task', 'update', '--root', root, blocked.id, '--by', 'test', '--status', 'blocked', '--blocker', 'Waiting for registry access'])
+
+  const before = await digestTree(root)
+  const report = JSON.parse(run(['onboard', root, '--json']).stdout)
+  const after = await digestTree(root)
+  assert.equal(after, before)
+  assert.equal(report.ok, true)
+  assert.equal(report.guide, '.project-os/generated/onboarding.html')
+  assert.equal(report.project_summary, 'Release coordination system')
+  assert.equal(report.desired_outcome, 'Every release has a proven landing receipt')
+  assert.deepEqual(report.boot_order, [
+    'AGENTS.md',
+    'PROJECT-OS.md',
+    'project-os onboard --json',
+    'canonical task.json',
+    'linked run packet',
+    'verification and handoff',
+  ])
+  assert.ok(report.human_attention.some((item) => item.id === human.id && item.kind === 'human_gate'))
+  assert.ok(report.human_attention.some((item) => item.id === blocked.id && item.kind === 'blocked_task'))
+  assert.ok(report.next_work.some((item) => item.id === ready.id))
+  assert.equal(report.next_work.some((item) => item.id === human.id), false)
+  assert.equal(report.next_work.some((item) => item.id === blocked.id), false)
+
+  const onboarding = await readFile(join(root, report.guide), 'utf8')
+  assert.match(onboarding, /Shaan must choose the date/)
+  assert.match(onboarding, /Waiting for registry access/)
+  assert.match(onboarding, /Prepare release notes/)
+  assert.match(onboarding, /Every release has a proven landing receipt/)
+  assert.match(onboarding, /data-contract="active-delivery"/)
+  assert.match(onboarding, /window\.__verify=Object\.freeze/)
+  assert.match(onboarding, /version:'project-os-cockpit\.v1'/)
+  assert.match(onboarding, /p,footer,code,a\{overflow-wrap:anywhere\}/)
+
+  const orderedTokens = ['AGENTS.md', 'PROJECT-OS.md', 'project-os onboard --json', 'task.json', 'linked run packet', 'Verify']
+  for (const source of [
+    await readFile(join(root, 'AGENTS.md'), 'utf8'),
+    await readFile(join(root, 'docs', 'project-os', 'ONBOARDING.md'), 'utf8'),
+    onboarding,
+  ]) {
+    const normalized = source.replace(/\s+/g, ' ')
+    let previous = -1
+    for (const token of orderedTokens) {
+      const index = normalized.indexOf(token)
+      assert.ok(index > previous, `${token} is out of order in onboarding surface`)
+      previous = index
+    }
+  }
+})
+
+test('cockpit bounds the visible task trunk while preserving the full count', () => {
+  const tasks = Array.from({ length: 51 }, (_, index) => ({
+    id: `TASK-${String(index + 1).padStart(4, '0')}`,
+    title: `Task ${index + 1}`,
+    status: 'backlog',
+    priority: 'medium',
+    domain: 'general',
+    owner: null,
+    dependencies: [],
+    requires_human: false,
+    path: `.agents/tasks/backlog/TASK-${String(index + 1).padStart(4, '0')}/task.json`,
+  }))
+  const html = renderOnboardingHtml({
+    project_name: 'Large fixture',
+    project_summary: '',
+    desired_outcome: '',
+    tasks,
+    sprints: [],
+    runs: [],
+    campaigns: [],
+    docs: [],
+    counts: { tasks: 51, sprints: 0, runs: 0, campaigns: 0, docs: 0 },
+    generation: { generator: 'fixture', source_commit: null, input_digest: 'a'.repeat(64), output_digest: 'b'.repeat(64) },
+  })
+  assert.match(html, /Showing 50 of 51 tasks/)
+  assert.match(html, /data-contract="delivery-trunk" data-item-count="51"/)
 })
 
 test('init refuses ordinary collisions without leaving a partial install', async (t) => {
@@ -148,6 +245,22 @@ test('check validates canonical records against installed schemas', async (t) =>
   run(['build', root])
   const checked = JSON.parse(run(['check', root, '--json'], 1).stdout)
   assert.ok(checked.errors.some((error) => error.code === 'schema_violation'))
+})
+
+test('check validates project identity and outcome configuration', async (t) => {
+  const root = await project(t)
+  const path = join(root, '.project-os', 'project.json')
+  const config = JSON.parse(await readFile(path, 'utf8'))
+  config.desired_outcome = 42
+  await writeFile(path, `${JSON.stringify(config, null, 2)}\n`, 'utf8')
+  run(['build', root])
+  const checked = JSON.parse(run(['check', root, '--json'], 1).stdout)
+  assert.ok(checked.errors.some((error) => error.code === 'schema_violation' && error.path === '.project-os/project.json'))
+
+  await writeFile(path, '{\n', 'utf8')
+  const malformed = JSON.parse(run(['check', root, '--json'], 1).stdout)
+  assert.ok(malformed.errors.some((error) => error.code === 'invalid_config_json'))
+  assert.ok(malformed.errors.some((error) => error.code === 'projection_build_failed'))
 })
 
 test('check returns structured errors for non-object task records', async (t) => {

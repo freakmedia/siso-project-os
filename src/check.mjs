@@ -50,6 +50,14 @@ export async function checkProject(root) {
     }
   }
 
+  if (await pathExists(configPath)) {
+    try {
+      addSchemaErrors(errors, schemas, 'project', JSON.parse(await readFile(configPath, 'utf8')), '.project-os/project.json')
+    } catch (error) {
+      add(errors, 'invalid_config_json', error.message, '.project-os/project.json')
+    }
+  }
+
   const entries = await scanTasks(root)
   const byId = new Map()
   for (const entry of entries) {
@@ -174,11 +182,15 @@ export async function checkProject(root) {
 
   await checkKnowledge(root, schemas, taskById, errors)
 
-  const outputs = await expectedBuild(root)
-  for (const [relativePath, expected] of Object.entries(outputs)) {
-    const path = join(root, relativePath)
-    if (!(await pathExists(path))) add(errors, 'missing_projection', 'generated projection is missing; run project-os build', relativePath)
-    else if ((await readFile(path, 'utf8')) !== expected) add(errors, 'stale_projection', 'generated projection is stale; run project-os build', relativePath)
+  try {
+    const outputs = await expectedBuild(root)
+    for (const [relativePath, expected] of Object.entries(outputs)) {
+      const path = join(root, relativePath)
+      if (!(await pathExists(path))) add(errors, 'missing_projection', 'generated projection is missing; run project-os build', relativePath)
+      else if ((await readFile(path, 'utf8')) !== expected) add(errors, 'stale_projection', 'generated projection is stale; run project-os build', relativePath)
+    }
+  } catch (error) {
+    add(errors, 'projection_build_failed', error.message, '.project-os/generated')
   }
 
   if (!(await pathExists(join(root, 'AGENTS.md')))) add(warnings, 'missing_agent_router', 'AGENTS.md is absent; merge .project-os/AGENTS.project-os.md into the canonical rules source if adopting an existing repo')

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siso.dev/schemas/project-os/project.schema.json",
+  "title": "SISO Project OS configuration",
+  "description": "Project-local identity, authority, and verification configuration.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "project_name",
+    "project_summary",
+    "desired_outcome",
+    "canonical_task_system",
+    "external_task_mirror",
+    "prefixes",
+    "generated_dir",
+    "verification_commands",
+    "artifact_policy"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "project_name": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "project_summary": { "type": "string", "maxLength": 500 },
+    "desired_outcome": { "type": "string", "maxLength": 500 },
+    "canonical_task_system": { "enum": ["filesystem", "external"] },
+    "external_task_mirror": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "null" }
+      ]
+    },
+    "prefixes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task", "sprint", "run", "ui"],
+      "properties": {
+        "task": { "const": "TASK" },
+        "sprint": { "const": "SPRINT" },
+        "run": { "const": "RUN" },
+        "ui": { "const": "UI" }
+      }
+    },
+    "generated_dir": { "const": ".project-os/generated" },
+    "verification_commands": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "artifact_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tracked_final_evidence_max_bytes", "raw_artifacts"],
+      "properties": {
+        "tracked_final_evidence_max_bytes": { "type": "integer", "minimum": 0 },
+        "raw_artifacts": { "enum": ["external-or-git-lfs", "git-lfs", "external"] }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "canonical_task_system": { "const": "external" } } },
+      "then": { "properties": { "external_task_mirror": { "type": "string", "minLength": 1 } } }
+    }
+  ]
+}

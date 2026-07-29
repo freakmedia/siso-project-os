@@ -13,10 +13,12 @@
 | What decisions are binding and why? | `docs/decisions/` |
 | Where are UI directions, decisions, and proof? | `.uihub/campaigns/` |
 | Where are generated indexes? | `.project-os/generated/` — projections only |
+| What should an agent do next, and what needs a human? | `project-os onboard --json` and `.project-os/generated/onboarding.html` |
 
 ## Commands
 
 ```bash
+project-os onboard --json
 project-os task create --title "Describe the outcome"
 project-os task update TASK-0001 --by agent-name --status in_progress --log "Started"
 project-os sprint create --title "Delivery window" --tasks TASK-0001
@@ -27,3 +29,4 @@ project-os check
 ```
 
 Do not create parallel task lists, dated status hubs, or hand-maintained generated indexes.
+Read `docs/project-os/ONBOARDING.md` for the complete cold-pickup and adoption protocol.
