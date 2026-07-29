@@ -2,8 +2,8 @@
   "schema_version": 1,
   "orientation": {
     "rules_source": "AGENTS.md",
-    "file_tree": "FILE-TREE.md",
-    "operating_map": "PROJECT-OS.md",
+    "file_tree": "FILE-TREE.html",
+    "operating_map": "PROJECT-OS.html",
     "nearest_rules_win": true
   },
   "layout": {
@@ -17,8 +17,8 @@
   },
   "required_paths": [
     "AGENTS.md",
-    "PROJECT-OS.md",
-    "FILE-TREE.md",
+    "PROJECT-OS.html",
+    "FILE-TREE.html",
     ".project-os/project.json",
     ".agents/tasks",
     "docs/project-os/ONBOARDING.md",

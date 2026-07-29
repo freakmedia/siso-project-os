@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="generator" content="siso-project-os:architecture-v2">
+  <title>{{PROJECT_NAME}} — What Lives Where</title>
+  <style>
+    :root{color-scheme:light dark;font:16px/1.55 system-ui,sans-serif}body{max-width:72rem;margin:0 auto;padding:2rem;color:#172033;background:#f6f8fb}
+    main{background:#fff;border:1px solid #dce2ea;border-radius:1rem;padding:clamp(1rem,3vw,2.5rem);box-shadow:0 1rem 3rem #18203012}h1,h2{line-height:1.15}
+    table{width:100%;border-collapse:collapse}th,td{text-align:left;vertical-align:top;padding:.7rem;border-bottom:1px solid #e3e7ed}code{overflow-wrap:anywhere}
+    .meta{color:#5b6574}.rule{border-left:.3rem solid #635bff;padding:.5rem 1rem;background:#f3f2ff}@media(prefers-color-scheme:dark){body{color:#e8edf5;background:#10131a}main{background:#171b24;border-color:#303746}.meta{color:#aeb7c4}.rule{background:#211f3a}th,td{border-color:#303746}}
+  </style>
+</head>
+<body>
+<main data-contract="project-file-tree">
+  <p class="meta">Stable first-read map · generated status belongs in <code>.project-os/generated/</code></p>
+  <h1>{{PROJECT_NAME}} — What Lives Where</h1>
+  <p class="rule">Extend this map when real domains appear. Do not reserve speculative folders or turn this into a volatile status page.</p>
+  <table>
+    <thead><tr><th>Path</th><th>Ownership contract</th></tr></thead>
+    <tbody>
+      <tr><td><code>AGENTS.md</code></td><td>Binding repository rules; nearest nested AGENTS.md wins.</td></tr>
+      <tr><td><code>PROJECT-OS.html</code></td><td>Question → canonical project-state destination.</td></tr>
+      <tr><td><code>FILE-TREE.html</code></td><td>This architecture, ownership, and dependency map.</td></tr>
+      <tr><td><code>script/</code></td><td>Normalized bootstrap, setup, test, server, and update entrypoints.</td></tr>
+      <tr><td><code>.project-os/</code></td><td>Project Kit configuration, schemas, baselines, and generated views.</td></tr>
+      <tr><td><code>.agents/</code></td><td>Canonical work, execution attempts, packets, memory, and capabilities.</td></tr>
+      <tr><td><code>.uihub/</code></td><td>Task-linked UI campaigns, decisions, and visual proof.</td></tr>
+      <tr><td><code>docs/</code></td><td>HTML knowledge, decisions, research, run evidence, and proven recipes.</td></tr>
+    </tbody>
+  </table>
+  <h2>Code placement contract</h2>
+  <ul>
+    <li>Partition application code by domain or feature, not one repository-wide technical layer.</li>
+    <li>A named domain folder is a dependency boundary; cross-domain access uses its declared public contract.</li>
+    <li>Generated or derived code lives in an isolated sibling path and is never mixed with authored source.</li>
+    <li>Add nested <code>AGENTS.md</code> only where a subtree has real local invariants.</li>
+    <li>Folder names are stable addresses; append before reorganizing.</li>
+  </ul>
+  <h2>Project-specific domains</h2>
+  <p>No domains have been declared yet. Add one table row per real domain with its public surface and cheapest verification command.</p>
+</main>
+<script type="application/json" id="project-file-tree-state">{"schema_version":1,"project_name":"{{PROJECT_NAME}}","layout_axis":"domain-first","generated_code":"isolated","public_surfaces":"explicit","domains":[]}</script>
+</body>
+</html>

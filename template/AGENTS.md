@@ -7,7 +7,7 @@ This repository uses SISO Project OS for project-local agent state.
 ## Start here
 
 1. Read this `AGENTS.md` — binding repository rules.
-2. Read `PROJECT-OS.md` — where each kind of project truth lives.
+2. Read `PROJECT-OS.html` — where each kind of project truth lives.
 3. Run `project-os onboard --json` — project health, human gates, and unblocked next work.
 4. Open the selected canonical `.agents/tasks/.../task.json` before acting.
 5. Create or use its linked run packet for a substantial attempt.

@@ -21,8 +21,8 @@
       "required": ["rules_source", "file_tree", "operating_map", "nearest_rules_win"],
       "properties": {
         "rules_source": { "const": "AGENTS.md" },
-        "file_tree": { "const": "FILE-TREE.md" },
-        "operating_map": { "const": "PROJECT-OS.md" },
+        "file_tree": { "const": "FILE-TREE.html" },
+        "operating_map": { "const": "PROJECT-OS.html" },
         "nearest_rules_win": { "const": true }
       }
     },

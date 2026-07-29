@@ -16,7 +16,7 @@
   "canonical_pointer": "docs/project-os/ONBOARDING.md",
   "supersedes": [],
   "superseded_by": null,
-  "source_pointers": ["AGENTS.md", "PROJECT-OS.md"],
+  "source_pointers": ["AGENTS.md", "PROJECT-OS.html"],
   "evidence": {
     "grade": "none",
     "observed_at": null,
@@ -37,7 +37,7 @@ campaign records remain canonical.
 
 1. Read root `AGENTS.md`. Rules nearest the file you edit take precedence when a repository has
    nested agent instructions.
-2. Read `PROJECT-OS.md`. It routes one question to one canonical destination.
+2. Read `PROJECT-OS.html`. It routes one question to one canonical destination.
 3. Run `project-os onboard --json`. Stop and inspect any reported check errors before mutating
    state.
 4. Select from `next_work`, then read that task's `task.json`, dependencies, acceptance criteria,

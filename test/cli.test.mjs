@@ -96,7 +96,7 @@ test('onboard is read-only and projects human attention separately from unblocke
   assert.equal(report.desired_outcome, 'Every release has a proven landing receipt')
   assert.deepEqual(report.boot_order, [
     'AGENTS.md',
-    'PROJECT-OS.md',
+    'PROJECT-OS.html',
     'project-os onboard --json',
     'canonical task.json',
     'linked run packet',
@@ -118,7 +118,7 @@ test('onboard is read-only and projects human attention separately from unblocke
   assert.match(onboarding, /version:'project-os-cockpit\.v1'/)
   assert.match(onboarding, /p,footer,code,a\{overflow-wrap:anywhere\}/)
 
-  const orderedTokens = ['AGENTS.md', 'PROJECT-OS.md', 'project-os onboard --json', 'task.json', 'linked run packet', 'Verify']
+  const orderedTokens = ['AGENTS.md', 'PROJECT-OS.html', 'project-os onboard --json', 'task.json', 'linked run packet', 'Verify']
   for (const source of [
     await readFile(join(root, 'AGENTS.md'), 'utf8'),
     await readFile(join(root, 'docs', 'project-os', 'ONBOARDING.md'), 'utf8'),
@@ -165,7 +165,7 @@ test('cockpit bounds the visible task trunk while preserving the full count', ()
 test('init refuses ordinary collisions without leaving a partial install', async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'siso-project-os-collision-'))
   t.after(() => rm(root, { recursive: true, force: true }))
-  await writeFile(join(root, 'PROJECT-OS.md'), 'existing\n', 'utf8')
+  await writeFile(join(root, 'PROJECT-OS.html'), 'existing\n', 'utf8')
   run(['init', root], 2)
   await assert.rejects(readFile(join(root, '.project-os', 'project.json'), 'utf8'))
 })

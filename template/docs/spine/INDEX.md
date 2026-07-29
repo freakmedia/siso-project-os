@@ -16,7 +16,7 @@
   "canonical_pointer": "docs/spine/INDEX.md",
   "supersedes": [],
   "superseded_by": null,
-  "source_pointers": ["PROJECT-OS.md"],
+  "source_pointers": ["PROJECT-OS.html"],
   "evidence": {
     "grade": "none",
     "observed_at": null,
