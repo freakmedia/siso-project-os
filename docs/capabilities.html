@@ -23,17 +23,17 @@
         <thead><tr><th>Value</th><th>Meaning</th></tr></thead>
         <tbody>
           <tr><td><code>INSTALL</code></td><td>Generic Project OS structure installed in every full-profile repository.</td></tr>
-          <tr><td><code>DEPEND</code></td><td>Behavior supplied by a declared provider such as SISO Agent Base or Node.js.</td></tr>
+          <tr><td><code>DEPEND</code></td><td>Behavior supplied by a required runtime such as Node.js or an optional orchestration provider.</td></tr>
           <tr><td><code>PROJECT_LOCAL</code></td><td>Repeatable product or repository knowledge whose canonical source stays in this repository.</td></tr>
           <tr><td><code>ADAPTER</code></td><td>A bridge from an engine or project check into a Project OS contract or receipt.</td></tr>
           <tr><td><code>OMIT</code></td><td>Deliberately excluded product, credential, model-policy, or machine-specific behavior.</td></tr>
         </tbody>
       </table>
-      <p>The starter declares Node.js 20+ and Agent Base <code>subagents</code>,
+      <p>Node.js 20+ is required. Codex CLI and Claude Code use their installed root loaders and can
+        run the complete core lifecycle directly. Agent Base <code>subagents</code>,
         <code>conduct</code>, <code>orchestrate</code>, <code>herdr</code>, and
-        <code>agent-comms</code> as dependencies. Doctoring resolves Agent Base from
-        <code>providerRoots</code> or <code>SISO_AGENT_BASE_ROOT</code>; it embeds no workstation
-        path and requires no secret.</p>
+        <code>agent-comms</code> are optional extensions. Doctoring reports unresolved optional
+        providers as warnings and requires no secret.</p>
     </section>
 
     <section id="discovery">
@@ -43,7 +43,7 @@
         and adapter routes. Scans are bounded by file count, depth, and bytes; do not follow
         symlinks; tolerate absent engine directories; and report invalid or ambiguous definitions.</p>
       <p><code>doctorProjectCapabilities(root, options)</code> validates the profile, manifests,
-        role profiles, commands, verification adapters, runtime shims, and every required provider.
+        role profiles, commands, verification adapters, runtime shims, required runtimes, and optional providers.
         Its result is directly renderable as generated HTML.</p>
     </section>
 

@@ -42,7 +42,7 @@ async function treeDigest(root) {
   return hash.digest('hex')
 }
 
-test('empty greenfield repo installs one canonical full-profile operator and passes with declared providers', async (t) => {
+test('empty greenfield repo installs one portable operator for Codex and Claude with optional providers', async (t) => {
   const root = await fixture(t)
   const empty = await discoverProjectCapabilities(root)
   assert.deepEqual(empty.counts, { skill: 0, agent: 0, command: 0, recipe: 0, adapter: 0 })
@@ -65,6 +65,7 @@ test('empty greenfield repo installs one canonical full-profile operator and pas
   assert.match(await readFile(join(root, '.agents', 'skills', 'project-operator', 'SKILL.md'), 'utf8'), /OPERATOR\.html/)
   assert.match(await readFile(join(root, '.agents', 'skills', 'project-operator', 'OPERATOR.html'), 'utf8'), /data-contract="project-os-operator\.v1"/)
   assert.match(await readFile(join(root, '.agents', 'skills', 'project-operator', 'OPERATOR.html'), 'utf8'), /"discovery_shim":"\.agents\/skills\/project-operator\/SKILL\.md"/)
+  assert.match(await readFile(join(root, '.agents', 'skills', 'project-operator', 'OPERATOR.html'), 'utf8'), /"supported_runtimes":\["codex-cli","claude-code"/)
   assert.match(await readFile(join(root, 'CLAUDE.md'), 'utf8'), /runtime entry shim, not a second rules source/)
   await write(root, 'AGENTS.md', '# Agent runtime shim\n\nLoad `.agents/skills/project-operator/SKILL.md`.\n')
   assert.equal((await walkFiles(root)).some((path) => /^\.(?:claude|codex)\/skills\/project-operator\/SKILL\.md$/.test(path)), false)
@@ -100,12 +101,14 @@ test('discovery deterministically inventories mixed Claude, Codex, neutral, reci
   await write(root, '.claude/commands/review.md', '---\nname: review\ndescription: Review command\n---\n# Review\n')
   await write(root, '.codex/prompts/ship.md', '---\nname: ship\ndescription: Ship prompt\n---\n# Ship\n')
   await write(root, 'docs/proven-recipes/release.md', '# Release recipe\n\nProven steps.\n')
+  await write(root, 'docs/proven-recipes/deploy.html', '<!doctype html><html><head><title>Deploy recipe</title></head><body><main>Proven steps.</main></body></html>\n')
+  await write(root, 'docs/proven-recipes/INDEX.html', '<!doctype html><title>Recipe index</title>\n')
   await write(root, '.agents/adapters/status.json', '{"adapter_id":"status-receipt","description":"Status receipt"}\n')
 
   const first = await discoverProjectCapabilities(root)
   const second = await discoverProjectCapabilities(root)
   assert.deepEqual(second, first)
-  assert.deepEqual(first.counts, { skill: 3, agent: 2, command: 3, recipe: 1, adapter: 1 })
+  assert.deepEqual(first.counts, { skill: 3, agent: 2, command: 3, recipe: 2, adapter: 1 })
   assert.deepEqual(first.conflicts, [{
     identity: 'skill:release',
     paths: ['.claude/skills/release/SKILL.md', '.codex/skills/release/SKILL.md'],
@@ -114,22 +117,25 @@ test('discovery deterministically inventories mixed Claude, Codex, neutral, reci
   }])
   assert.equal(JSON.stringify(first).includes(root), false)
   assert.ok(first.items.some((entry) => entry.kind === 'recipe' && entry.id === 'release'))
+  assert.ok(first.items.some((entry) => entry.kind === 'recipe' && entry.id === 'deploy' && entry.format === 'html' && entry.title === 'Deploy recipe'))
+  assert.equal(first.items.some((entry) => entry.path === 'docs/proven-recipes/INDEX.html'), false)
   assert.ok(first.routes.some((entry) => entry.root === '.codex/commands' && entry.count === 0))
 })
 
-test('full-profile doctor fails loudly and actionably when required Agent Base routes are missing', async (t) => {
+test('portable doctor passes core operation and warns actionably when optional Agent Base routes are missing', async (t) => {
   const root = await fixture(t)
   await applyFullProfileAdoption(root)
   await write(root, 'AGENTS.md', '# Agent runtime shim\n\nLoad `.agents/skills/project-operator/SKILL.md`.\n')
   const doctor = await doctorProjectCapabilities(root, { env: {} })
-  assert.equal(doctor.ok, false)
-  const failures = doctor.checks.filter((entry) => entry.status === 'fail')
+  assert.equal(doctor.ok, true)
+  const failures = doctor.checks.filter((entry) => entry.status === 'warn' && entry.id.startsWith('capability.agent-base.'))
   assert.deepEqual(
     failures.map((entry) => entry.id),
     AGENT_BASE_CAPABILITIES.map((id) => `capability.agent-base.${id}`).sort(),
   )
   for (const failure of failures) {
     assert.match(failure.message, /unresolved/)
+    assert.equal(failure.required, false)
     assert.match(failure.remediation, /providerRoots\.siso-agent-base|SISO_AGENT_BASE_ROOT/)
     assert.doesNotMatch(failure.remediation, /Users\/|credentials?|token|secret value/i)
   }

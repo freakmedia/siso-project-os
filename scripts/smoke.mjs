@@ -25,8 +25,25 @@ try {
     await writeFile(join(directory, 'SKILL.md'), `---\nname: ${skill}\ndescription: smoke provider\n---\n`, 'utf8')
   }
   run(['init', root, '--name', 'Smoke Project'])
+  const configuration = JSON.parse(await readFile(join(root, '.project-os', 'project.json'), 'utf8'))
+  if (configuration.project_os_version !== '0.4.0') throw new Error(`unexpected Project OS version: ${configuration.project_os_version}`)
+  if (JSON.stringify(configuration.launcher) !== JSON.stringify({ program: 'npx', arguments: ['--yes', 'github:sisodias/siso-project-os#v0.4.0'] })) {
+    throw new Error(`unexpected pinned launcher: ${JSON.stringify(configuration.launcher)}`)
+  }
+  const installManifest = JSON.parse(await readFile(join(root, '.project-os', 'install-manifest.json'), 'utf8'))
+  if (installManifest.installed_version !== '0.4.0' || installManifest.files.length < 100) {
+    throw new Error(`install manifest incomplete: ${JSON.stringify(installManifest)}`)
+  }
+  const portableDoctor = JSON.parse(run(['doctor', root, '--json']).stdout)
+  if (!portableDoctor.ok || portableDoctor.summary.warned < 1 || !portableDoctor.checks.some((check) => check.status === 'warn' && check.required === false)) {
+    throw new Error(`portable doctor failed: ${JSON.stringify(portableDoctor, null, 2)}`)
+  }
   const doctor = JSON.parse(run(['doctor', root, '--agent-base-root', providerRoot, '--json']).stdout)
   if (!doctor.ok) throw new Error(`doctor failed: ${JSON.stringify(doctor, null, 2)}`)
+  const upgrade = JSON.parse(run(['upgrade', 'plan', root, '--json']).stdout)
+  if (!upgrade.current || !upgrade.can_apply || upgrade.summary.preserve !== 0) {
+    throw new Error(`current install did not plan as a no-op: ${JSON.stringify(upgrade, null, 2)}`)
+  }
   const architecture = JSON.parse(run(['architecture', 'check', root, '--json']).stdout)
   if (!architecture.ok) throw new Error(`architecture failed: ${JSON.stringify(architecture, null, 2)}`)
   const capabilities = JSON.parse(run(['capabilities', 'list', root, '--json']).stdout)

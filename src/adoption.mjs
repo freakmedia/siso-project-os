@@ -3,6 +3,7 @@ import { basename, dirname, join, resolve } from 'node:path'
 import { discoverProjectCapabilities } from './capabilities.mjs'
 import { validateSchema } from './schema.mjs'
 import { pathExists, schemasRoot, templateRoot, walkFiles, writeJsonAtomic } from './shared.mjs'
+import { writeInstallManifest } from './upgrade.mjs'
 
 export const FULL_PROFILE_FILES = Object.freeze([
   '.agents/project-profile.json',
@@ -64,7 +65,7 @@ function migrationPlan(mode, operations, discovery, rules) {
   if (!rules.routed) {
     steps.push({ step: step++, action: 'merge-root-route', status: 'manual', paths: ['AGENTS.md'], description: 'Add one pointer to .agents/skills/project-operator/SKILL.md in the canonical root rules; do not copy its contents.' })
   }
-  steps.push({ step: step++, action: 'resolve-providers', status: 'manual', providers: ['siso-agent-base'], description: 'Declare the Agent Base provider root or capabilities; credentials are not required.' })
+  steps.push({ step: step++, action: 'detect-runtime', status: 'ready-after-install', runtimes: ['codex-cli', 'claude-code'], description: 'Use the current agent CLI directly; declare Agent Base only when optional fleet orchestration is wanted.' })
   steps.push({ step, action: 'doctor', status: 'ready-after-install', description: 'Run doctorProjectCapabilities and resolve every required failure before calling the full profile operational.' })
   return steps
 }
@@ -243,7 +244,7 @@ function publicAdoptionPlan(root, mode, operations, legacy) {
     next_actions: [
       ...(preserved.length > 0 ? [{ action: 'resolve-preserved-authorities', status: 'required', paths: preserved.map((entry) => entry.path) }] : []),
       ...(legacy.length > 0 ? [{ action: 'migrate-project-os-markdown-to-html', status: 'required', paths: legacy }] : []),
-      { action: 'doctor', status: 'required', command: 'project-os doctor --agent-base-root /path/to/SISO_Agent_Base --json' },
+      { action: 'doctor', status: 'required', command: 'project-os doctor --json', optional_provider_command: 'project-os doctor --agent-base-root /path/to/SISO_Agent_Base --json' },
       { action: 'check', status: 'required', command: 'project-os check --json' },
     ],
   }
@@ -268,6 +269,7 @@ export async function applyProjectAdoption(projectRoot, options = {}) {
   if (options.dryRun) return { ok: true, dry_run: true, plan, created: [], merged_routes: [] }
   const created = []
   const modified = []
+  let reportPlan = plan
   try {
     await mkdir(root, { recursive: true })
     for (const operation of operations) {
@@ -281,14 +283,27 @@ export async function applyProjectAdoption(projectRoot, options = {}) {
         await writeFile(target, operation.content, 'utf8')
       }
     }
+    reportPlan = publicAdoptionPlan(root, await rootMode(root), await projectAdoptionOperations(root, options), await legacyMarkdown(root))
     const reportRoot = join(root, '.project-os', 'migration')
     await mkdir(reportRoot, { recursive: true })
-    await writeJsonAtomic(join(reportRoot, 'project-kit-migration.json'), plan)
-    await writeFile(join(reportRoot, 'project-kit-migration.html'), renderMigrationHtml(plan), 'utf8')
+    await writeJsonAtomic(join(reportRoot, 'project-kit-migration.json'), reportPlan)
+    await writeFile(join(reportRoot, 'project-kit-migration.html'), renderMigrationHtml(reportPlan), 'utf8')
   } catch (error) {
     for (const path of created.reverse()) await unlink(path).catch(() => {})
     for (const entry of modified.reverse()) await writeFile(entry.target, entry.content, 'utf8').catch(() => {})
     throw error
+  }
+  let installManifest = null
+  let installManifestError = null
+  try {
+    installManifest = await writeInstallManifest(root, {
+      by: 'project-os:adopt',
+      paths: operations.filter((entry) => entry.action !== 'preserve').map((entry) => entry.path),
+      preservedPaths: operations.filter((entry) => entry.action === 'preserve').map((entry) => entry.path),
+    })
+  } catch (error) {
+    installManifestError = error instanceof Error ? error.message : String(error)
+    if (plan.operational_after_apply) throw error
   }
   return {
     ok: true,
@@ -297,7 +312,10 @@ export async function applyProjectAdoption(projectRoot, options = {}) {
     merged_routes: operations.filter((entry) => entry.action === 'merge-route').map((entry) => entry.path),
     preserved: operations.filter((entry) => entry.action === 'preserve').map((entry) => entry.path),
     report: '.project-os/migration/project-kit-migration.html',
+    install_manifest: installManifest ? '.project-os/install-manifest.json' : null,
+    install_manifest_error: installManifestError,
     plan,
+    report_plan: reportPlan,
   }
 }
 

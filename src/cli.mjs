@@ -25,6 +25,7 @@ import { formatOnboardingReport, onboardingReport } from './console.mjs'
 import * as lifecycle from './lifecycle.mjs'
 import { closeRun, createRun, createSprint, createTask, updateTask } from './work.mjs'
 import { advanceUiCampaign, createUiCampaign, importUiReviewDecision } from './ui.mjs'
+import { applyUpgrade, planUpgrade, rollbackUpgrade, writeInstallManifest } from './upgrade.mjs'
 
 const HELP = `SISO Project OS
 
@@ -32,6 +33,9 @@ Usage:
   project-os init [path] [--name <name>] [--summary <text>] [--outcome <text>] [--dry-run]
   project-os adopt plan [path]
   project-os adopt apply [path] [--dry-run]
+  project-os upgrade plan [path]
+  project-os upgrade apply [path] [--dry-run] [--by <agent>]
+  project-os upgrade rollback UPGRADE-... --root <path> [--by <agent>]
   project-os onboard [path] [--json]
   project-os check [path] [--json]
   project-os build [path]
@@ -118,7 +122,7 @@ async function initProject(tokens) {
   const copied = await copyRenderedTree(templateRoot, root, replacements, {
     skipExistingAgentRules: existingAgentRules,
   })
-  await copySchemas(root)
+  const schemaFiles = await copySchemas(root)
   if (existingAgentRules) {
     const source = await readFile(join(templateRoot, 'AGENTS.md'), 'utf8')
     const rendered = source.split('{{PROJECT_NAME}}').join(name)
@@ -129,6 +133,14 @@ async function initProject(tokens) {
   }
   await buildProject(root)
   await writeArchitectureBaseline(root, { by: 'project-os:init' })
+  await writeInstallManifest(root, {
+    by: 'project-os:init',
+    paths: [
+      ...copied.files.filter((path) => !copied.skipped.includes(path)),
+      ...schemaFiles.map((path) => `.project-os/schemas/${path}`),
+    ],
+    preservedPaths: existingAgentRules ? ['AGENTS.md'] : [],
+  })
   print({
     ok: true,
     root,
@@ -228,6 +240,23 @@ export async function main(argv) {
       if (activation.error || !result.plan.operational_after_apply) process.exitCode = 2
     }
     print(result, flags.json === true)
+    return
+  }
+
+  if (command === 'upgrade') {
+    if (!['plan', 'apply', 'rollback'].includes(subcommand)) throw new Error(`unknown upgrade command\n\n${HELP}`)
+    const { positional, flags } = parseArgs(rest)
+    const root = subcommand === 'rollback'
+      ? resolve(typeof flags.root === 'string' ? flags.root : (positional[1] ?? process.cwd()))
+      : commandRoot(positional, flags)
+    await assertInitialized(root)
+    const result = subcommand === 'plan'
+      ? await planUpgrade(root, flags)
+      : subcommand === 'apply'
+        ? await applyUpgrade(root, { ...flags, dryRun: flags['dry-run'] === true })
+        : await rollbackUpgrade(root, positional[0], flags)
+    print(result, flags.json === true)
+    if (subcommand === 'plan' && !result.can_apply) process.exitCode = 2
     return
   }
 

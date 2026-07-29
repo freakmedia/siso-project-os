@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -18,6 +19,15 @@ async function write(root, path, content) {
   await writeFile(target, content, 'utf8')
 }
 
+async function treeDigest(root) {
+  const hash = createHash('sha256')
+  for (const path of await walkFiles(root)) {
+    hash.update(path)
+    hash.update(await readFile(join(root, path)))
+  }
+  return hash.digest('hex')
+}
+
 test('complete project adoption installs every pack and is idempotent', async (t) => {
   const root = await fixture(t, 'siso-project-kit-greenfield-')
   const first = await applyProjectAdoption(root, {
@@ -34,16 +44,23 @@ test('complete project adoption installs every pack and is idempotent', async (t
   assert.ok(first.created.includes('.project-os/schemas/verification-receipt.schema.json'))
   const operatingMap = await readFile(join(root, 'PROJECT-OS.html'), 'utf8')
   assert.match(operatingMap, /Complete &amp; &quot;fixture&quot;/)
-  assert.equal(JSON.parse(await readFile(join(root, '.project-os', 'project.json'), 'utf8')).project_name, 'Complete & "fixture"')
+  const configuration = JSON.parse(await readFile(join(root, '.project-os', 'project.json'), 'utf8'))
+  assert.equal(configuration.project_name, 'Complete & "fixture"')
+  assert.deepEqual(configuration.launcher, { program: 'npx', arguments: ['--yes', 'github:sisodias/siso-project-os#v0.4.0'] })
   assert.match(await readFile(join(root, '.project-os', 'project.json'), 'utf8'), /cold agent can safely resume/i)
+  const onboardCommand = JSON.parse(await readFile(join(root, '.agents', 'commands', 'project-os-onboard.json'), 'utf8'))
+  assert.equal(onboardCommand.program, configuration.launcher.program)
+  assert.deepEqual(onboardCommand.arguments.slice(0, 2), configuration.launcher.arguments)
   assert.match(await readFile(join(root, '.project-os', 'migration', 'project-kit-migration.html'), 'utf8'), /data-contract="project-kit-migration"/)
 
   const markdown = (await walkFiles(root)).filter((path) => path.endsWith('.md')).sort()
   assert.deepEqual(markdown, ['AGENTS.md', 'CLAUDE.md', '.agents/skills/project-operator/SKILL.md'].sort())
+  const beforeSecond = await treeDigest(root)
   const second = await applyProjectAdoption(root)
   assert.deepEqual(second.created, [])
   assert.deepEqual(second.preserved, [])
   assert.equal(second.plan.operational_after_apply, true)
+  assert.equal(await treeDigest(root), beforeSecond)
 })
 
 test('existing-project adoption preserves authorities, merges only runtime routes, and reports HTML migration work', async (t) => {

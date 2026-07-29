@@ -6,7 +6,7 @@
   "ownership": "INSTALL",
   "instruction_routes": [
     "AGENTS.md",
-    "PROJECT-OS.md",
+    "PROJECT-OS.html",
     ".agents/skills/project-operator/SKILL.md",
     ".agents/skills/project-operator/OPERATOR.html"
   ],

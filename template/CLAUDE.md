@@ -5,6 +5,6 @@ engine-required `.agents/skills/project-operator/SKILL.md` discovery shim and fo
 canonical `.agents/skills/project-operator/OPERATOR.html` authority.
 
 Capability, role, command, adapter, and provider records are declared by
-`.agents/project-profile.json`. Do not copy the operator skill or Agent Base skills into
-`.claude/`; keep project-specific repeatable behavior under the canonical `.agents` capability
-root.
+`.agents/project-profile.json`. Claude Code can execute the complete Project OS lifecycle directly;
+external orchestration providers are optional. Do not copy the operator body into `.claude/`;
+keep project-specific repeatable behavior under the canonical `.agents` capability root.

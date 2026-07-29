@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siso.dev/schemas/project-os/upgrade-record.schema.json",
+  "title": "Project OS upgrade record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "from_version", "to_version", "state", "created_at", "applied_at", "rolled_back_at", "backup_root", "operations", "unresolved_paths"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": { "type": "string", "pattern": "^UPGRADE-[A-Z0-9.-]+$" },
+    "from_version": { "type": "string", "minLength": 1 },
+    "to_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "state": { "enum": ["planned", "applied", "rolled_back"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "applied_at": { "oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }] },
+    "rolled_back_at": { "oneOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }] },
+    "backup_root": { "type": "string", "minLength": 1 },
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action", "path", "reason", "from_sha256", "to_sha256"],
+        "properties": {
+          "action": { "enum": ["create", "replace", "retain", "preserve"] },
+          "path": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 1 },
+          "from_sha256": { "oneOf": [{ "type": "string", "pattern": "^[a-f0-9]{64}$" }, { "type": "null" }] },
+          "to_sha256": { "oneOf": [{ "type": "string", "pattern": "^[a-f0-9]{64}$" }, { "type": "null" }] }
+        }
+      }
+    },
+    "unresolved_paths": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

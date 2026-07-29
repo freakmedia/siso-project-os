@@ -10,6 +10,7 @@ import { discoverProjectCapabilities } from './capabilities.mjs'
 import { composeKnowledgeOnboarding, renderKnowledgeOnboardingHtml } from './knowledge-onboarding.mjs'
 import { readCapabilityCoverage, renderCapabilityCoverageHtml } from './provenance.mjs'
 import { expectedUiCampaignProjections } from './ui-projections.mjs'
+import { PROJECT_OS_VERSION } from './version.mjs'
 
 function htmlEscape(value) {
   return String(value).replace(/[&<>"']/g, (character) => ({
@@ -143,7 +144,7 @@ export async function docsCorpus(root) {
   const inputDigest = sha256(JSON.stringify(inputs))
   const payload = {
     schema_version: 1,
-    generator: 'siso-project-os@0.3.0/docs-corpus',
+    generator: `siso-project-os@${PROJECT_OS_VERSION}/docs-corpus`,
     source_commit: sourceCommit(root),
     inputs,
     input_digest: inputDigest,
@@ -194,7 +195,7 @@ export async function projectSnapshot(root) {
     },
   }
   const generation = {
-    generator: 'siso-project-os@0.3.0/project-index',
+    generator: `siso-project-os@${PROJECT_OS_VERSION}/project-index`,
     source_commit: sourceCommit(root),
     input_digest: sha256(JSON.stringify(payload)),
   }

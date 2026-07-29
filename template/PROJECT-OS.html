@@ -25,13 +25,15 @@
       <tr><td>What stable paths and checks apply?</td><td><code>docs/spine/REPO-FACTS.html</code> and <code>docs/spine/EDIT-MAPS.html</code></td></tr>
       <tr><td>What decisions are binding?</td><td><code>docs/decisions/</code></td></tr>
       <tr><td>Where are UI directions, reviews, and proof?</td><td><code>.uihub/campaigns/</code></td></tr>
-      <tr><td>Which capability executes this?</td><td><code>.agents/capabilities/</code>; shared runtime resolves to Agent Base</td></tr>
+      <tr><td>Which capability executes this?</td><td><code>.agents/capabilities/</code>; the project manifest resolves required routes and optional providers</td></tr>
       <tr><td>What should an agent do next?</td><td><code>project-os onboard --json</code> and <code>.project-os/generated/onboarding.html</code></td></tr>
     </tbody>
   </table>
   <h2>Core commands</h2>
+  <p>Resolve the pinned <code>launcher</code> program and argv from <code>.project-os/project.json</code>.
+    The <code>project-os</code> prefix below is the logical command name, not a global-install assumption.</p>
   <pre><code>project-os onboard --json
-project-os doctor --agent-base-root /path/to/SISO_Agent_Base --json
+project-os doctor --json
 project-os task claim --by agent-name
 project-os mission acquire --objective "Outcome" --owner agent-name
 project-os resume create --objective "Outcome" --first-read AGENTS.md,PROJECT-OS.html --by agent-name
@@ -41,9 +43,9 @@ project-os ui create --title "Surface redesign" --task TASK-0001
 project-os build
 project-os check</code></pre>
   <h2>Ownership boundary</h2>
-  <p>Project OS owns project-local records, evidence, projections, migration contracts, and integrity gates. Agent Base owns spawning, model routing, messaging, telemetry, and terminal control. Product-specific credentials and automation remain project-local adapters.</p>
+  <p>Project OS owns project-local records, evidence, projections, migration contracts, and integrity gates. Codex CLI or Claude Code executes the core lifecycle directly. Optional providers may add spawning, model routing, messaging, telemetry, and persistent terminal control. Product-specific credentials and automation remain project-local adapters.</p>
   <p>Do not create parallel task lists, dated status hubs, duplicate engine-local skills, or hand-maintained generated indexes.</p>
 </main>
-<script type="application/json" id="project-operating-map-state">{"schema_version":3,"project_name":{{PROJECT_NAME_JSON}},"canonical_task_system":".agents/tasks","generated_state":".project-os/generated","machine_formats":["json","jsonl"],"human_format":"html","runtime_boundary":"agent-base","adapter_boundary":"project-local"}</script>
+<script type="application/json" id="project-operating-map-state">{"schema_version":3,"project_name":{{PROJECT_NAME_JSON}},"canonical_task_system":".agents/tasks","generated_state":".project-os/generated","machine_formats":["json","jsonl"],"human_format":"html","runtime_boundary":"codex-or-claude-cli","orchestration_boundary":"optional-provider","adapter_boundary":"project-local"}</script>
 </body>
 </html>

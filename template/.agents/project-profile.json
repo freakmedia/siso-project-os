@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "profile_id": "full",
-  "title": "Full SISO Project Kit",
-  "description": "Engine-neutral project operation, capability discovery, provider routes, command contracts, and verification adapters.",
+  "title": "Portable Project OS profile",
+  "description": "Project operation for Codex CLI, Claude Code, and compatible agent CLIs, with optional provider routes, command contracts, and verification adapters.",
   "capability_root": ".agents",
   "canonical_operator": ".agents/skills/project-operator/SKILL.md",
   "operator_authority": ".agents/skills/project-operator/OPERATOR.html",

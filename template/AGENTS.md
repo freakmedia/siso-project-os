@@ -11,10 +11,12 @@ canonical HTML operating authority without duplicating it here.
 
 1. Read this `AGENTS.md` — binding repository rules.
 2. Read `PROJECT-OS.html` — where each kind of project truth lives.
-3. Run `project-os onboard --json` — project health, human gates, and unblocked next work.
+3. Read the pinned launcher in `.project-os/project.json`, then use it to execute the logical
+   `project-os onboard --json` command with this repository as the root — project health, human
+   gates, and unblocked next work.
 4. Open the selected canonical `.agents/tasks/.../task.json` before acting.
 5. Create or use its linked run packet for a substantial attempt.
-6. Verify, run `project-os check`, and hand off from repository evidence.
+6. Verify, run the pinned launcher's `check . --json` arguments, and hand off from repository evidence.
 
 Humans can open `.project-os/generated/onboarding.html` for the same delivery map. The knowledge
 spine rules live at `docs/project-os/INDEX.html`; the durable onboarding contract is
@@ -22,11 +24,12 @@ spine rules live at `docs/project-os/INDEX.html`; the durable onboarding contrac
 
 ## Runtime and capability boundary
 
-Project OS owns project records and packets; it does not spawn or supervise agents. Use the shared
-Agent Base routes for live execution: `subagents` for lane selection, `conduct` for an in-session
-fleet, `orchestrate` plus `herdr` for persistent panes, and `agent-comms` for messaging. Discover
-project-local skills, roles, commands, proven recipes, and verification adapters through the
-declared capability inventory. Do not copy shared runtime skills into this repository.
+Project OS owns project records and packets; it does not replace the agent CLI that is reading this
+file. Codex CLI operates through this `AGENTS.md`; Claude Code operates through `CLAUDE.md`. Either
+runtime can execute the complete single-agent lifecycle directly. Optional orchestration providers
+may add spawning, model routing, persistent panes, messaging, or telemetry, but their absence never
+blocks core Project OS operation. Discover project-local skills, roles, commands, proven recipes,
+verification adapters, and optional providers through the declared capability inventory.
 
 ## Binding rules
 
@@ -40,5 +43,5 @@ declared capability inventory. Do not copy shared runtime skills into this repos
 - Product-specific commands and policies remain project-local adapters; their receipts link back to
   canonical tasks/runs and never become hidden writers.
 
-Run `project-os check .` before handoff. If the command is not installed locally, use
-`npx github:sisodias/siso-project-os check .`.
+Run the pinned launcher before handoff. For this installed version:
+`npx --yes github:sisodias/siso-project-os#v0.4.0 check . --json`.

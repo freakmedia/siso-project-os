@@ -31,7 +31,7 @@ const DEFAULT_LIMITS = Object.freeze({
   maxDepth: 5,
 })
 
-const SKIPPED_MARKDOWN = new Set(['INDEX.md', 'README.md'])
+const SKIPPED_CAPABILITY_NAMES = new Set(['INDEX.md', 'README.md', 'INDEX.html', 'README.html'])
 
 function posixPath(value) {
   return value.split(sep).join('/')
@@ -68,8 +68,15 @@ function discoveryLimits(options = {}) {
 
 function routeMatches(route, name) {
   if (route.file) return name === route.file
-  if (SKIPPED_MARKDOWN.has(name)) return false
+  if (SKIPPED_CAPABILITY_NAMES.has(name)) return false
   return route.extensions.includes(extname(name).toLowerCase())
+}
+
+function capabilityFormat(path) {
+  const extension = extname(path).toLowerCase()
+  if (extension === '.json') return 'json'
+  if (extension === '.html') return 'html'
+  return 'markdown'
 }
 
 async function scanRoute(projectRoot, route, limits, budget) {
@@ -154,7 +161,7 @@ function fallbackId(kind, path) {
   const base = basename(path, extname(path))
   if (kind === 'recipe') return path
     .replace(/^docs\/proven-recipes\//, '')
-    .replace(/\.md$/i, '')
+    .replace(/\.(?:md|html)$/i, '')
     .split('/')
     .join('.')
   return base
@@ -190,7 +197,7 @@ async function describeFile(projectRoot, route, path, limits) {
         engine: route.engine,
         ownership: 'PROJECT_LOCAL',
         path,
-        format: extname(path).toLowerCase() === '.json' ? 'json' : 'markdown',
+        format: capabilityFormat(path),
         status: 'oversize',
       },
       error: { code: 'capability_file_oversize', path, message: `file exceeds discovery byte limit ${limits.maxFileBytes}` },
@@ -231,6 +238,24 @@ async function describeFile(projectRoot, route, path, limits) {
         },
         error: { code: 'capability_json_invalid', path, message: error instanceof Error ? error.message : String(error) },
       }
+    }
+  }
+
+  if (extname(path).toLowerCase() === '.html') {
+    const title = content.match(/<title(?:\s[^>]*)?>([\s\S]*?)<\/title>/i)?.[1]?.replace(/<[^>]+>/g, '').trim() || fallback
+    return {
+      item: {
+        kind: route.kind,
+        id: fallback,
+        title,
+        description: null,
+        engine: route.engine,
+        ownership: 'PROJECT_LOCAL',
+        path,
+        format: 'html',
+        status: 'valid',
+      },
+      error: null,
     }
   }
 

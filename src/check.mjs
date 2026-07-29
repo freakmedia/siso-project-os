@@ -62,6 +62,26 @@ export async function checkProject(root) {
     }
   }
 
+  const installManifestPath = join(root, '.project-os', 'install-manifest.json')
+  if (await pathExists(installManifestPath)) {
+    try {
+      addSchemaErrors(errors, schemas, 'install-manifest', JSON.parse(await readFile(installManifestPath, 'utf8')), '.project-os/install-manifest.json')
+    } catch (error) {
+      add(errors, 'invalid_install_manifest_json', error.message, '.project-os/install-manifest.json')
+    }
+  } else {
+    add(warnings, 'missing_install_manifest', 'upgrade guard manifest is absent; run project-os upgrade plan', '.project-os/install-manifest.json')
+  }
+
+  for (const upgradeId of (await listDirectories(join(root, '.project-os', 'upgrades'))).filter((id) => id.startsWith('UPGRADE-'))) {
+    const relativePath = `.project-os/upgrades/${upgradeId}/upgrade.json`
+    try {
+      addSchemaErrors(errors, schemas, 'upgrade-record', JSON.parse(await readFile(join(root, relativePath), 'utf8')), relativePath)
+    } catch (error) {
+      add(errors, 'invalid_upgrade_record_json', error.message, relativePath)
+    }
+  }
+
   const entries = await scanTasks(root)
   const byId = new Map()
   for (const entry of entries) {

@@ -38,8 +38,10 @@
 
     <section>
       <h2>Doctor and adoption</h2>
-      <p>The doctor needs no credentials. Agent Base resolves from a provider declaration or
-        <code>SISO_AGENT_BASE_ROOT</code>. Missing required routes fail with remediation.</p>
+      <p>The doctor needs no credentials. Codex CLI and Claude Code are supported directly through
+        their root loaders. Agent Base resolves from a provider declaration or
+        <code>SISO_AGENT_BASE_ROOT</code>; missing optional routes warn while missing required
+        project routes fail with remediation.</p>
       <p>Existing-repository adoption starts with a plan. Differing files are preserved,
         capability collisions are inventoried, project-local authorities are retained, and runtime
         shim changes become explicit merge actions.</p>
