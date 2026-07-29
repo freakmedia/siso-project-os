@@ -3,39 +3,47 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="generator" content="siso-project-os:operating-map-v2">
+  <meta name="generator" content="siso-project-os:operating-map-v3">
   <title>{{PROJECT_NAME}} — Project Operating Map</title>
-  <style>:root{font:16px/1.5 system-ui,sans-serif;color:#172033;background:#f6f8fb}body{max-width:72rem;margin:auto;padding:2rem}main{background:#fff;padding:2rem;border:1px solid #dce2ea;border-radius:1rem}table{width:100%;border-collapse:collapse}th,td{text-align:left;vertical-align:top;padding:.7rem;border-bottom:1px solid #e3e7ed}code{overflow-wrap:anywhere}@media(prefers-color-scheme:dark){:root{color:#e8edf5;background:#10131a}main{background:#171b24;border-color:#303746}th,td{border-color:#303746}}</style>
+  <style>:root{font:16px/1.55 system-ui,sans-serif;color:#172033;background:#f6f8fb}body{max-width:76rem;margin:auto;padding:2rem}main{background:#fff;padding:2rem;border:1px solid #dce2ea;border-radius:1rem}table{width:100%;border-collapse:collapse}th,td{text-align:left;vertical-align:top;padding:.7rem;border-bottom:1px solid #e3e7ed}code{overflow-wrap:anywhere}pre{white-space:pre-wrap;background:#f2f5f9;padding:1rem;border-radius:.6rem}@media(max-width:42rem){body{padding:.5rem}main{padding:1rem}table,tbody,tr,th,td{display:block}tr{padding:.6rem 0}th,td{border:0;padding:.15rem 0}}@media(prefers-color-scheme:dark){:root{color:#e8edf5;background:#10131a}main{background:#171b24;border-color:#303746}th,td{border-color:#303746}pre{background:#10131a}}</style>
 </head>
 <body>
 <main data-contract="project-operating-map">
   <h1>{{PROJECT_NAME}} — Project Operating Map</h1>
+  <p>One question, one canonical destination. JSON/JSONL is machine state; HTML is the human and agent-readable operating surface. Generated pages are projections, never alternate writers.</p>
   <table>
     <thead><tr><th>Question</th><th>Canonical destination</th></tr></thead>
     <tbody>
       <tr><td>What work exists and what is its state?</td><td><code>.agents/tasks/</code></td></tr>
+      <tr><td>Who owns the current mission and how do I resume?</td><td><code>.agents/missions/</code> and <code>.agents/briefs/CURRENT.html</code></td></tr>
       <tr><td>What is grouped into the current delivery window?</td><td><code>.agents/sprints/</code></td></tr>
       <tr><td>What happened in an execution attempt?</td><td><code>.agents/runs/</code></td></tr>
+      <tr><td>Which files are reserved and by whom?</td><td><code>.agents/work-claims/</code></td></tr>
+      <tr><td>What was independently verified and landed?</td><td><code>.agents/delivery/</code> and run-local receipts</td></tr>
       <tr><td>What durable lesson must future agents know?</td><td><code>.agents/memory/</code></td></tr>
       <tr><td>Where does durable subsystem knowledge live?</td><td><code>docs/domains/</code></td></tr>
-      <tr><td>Where are observations and proof receipts?</td><td><code>docs/runs/</code> and task-local <code>evidence/</code></td></tr>
+      <tr><td>What stable paths and checks apply?</td><td><code>docs/spine/REPO-FACTS.html</code> and <code>docs/spine/EDIT-MAPS.html</code></td></tr>
       <tr><td>What decisions are binding?</td><td><code>docs/decisions/</code></td></tr>
-      <tr><td>Where are UI directions and proof?</td><td><code>.uihub/campaigns/</code></td></tr>
-      <tr><td>Where are generated indexes?</td><td><code>.project-os/generated/</code> — projections only</td></tr>
+      <tr><td>Where are UI directions, reviews, and proof?</td><td><code>.uihub/campaigns/</code></td></tr>
+      <tr><td>Which capability executes this?</td><td><code>.agents/capabilities/</code>; shared runtime resolves to Agent Base</td></tr>
       <tr><td>What should an agent do next?</td><td><code>project-os onboard --json</code> and <code>.project-os/generated/onboarding.html</code></td></tr>
     </tbody>
   </table>
   <h2>Core commands</h2>
   <pre><code>project-os onboard --json
-project-os task create --title "Describe the outcome"
-project-os task update TASK-0001 --by agent-name --status in_progress --log "Started"
+project-os doctor --agent-base-root /path/to/SISO_Agent_Base --json
+project-os task claim --by agent-name
+project-os mission acquire --objective "Outcome" --owner agent-name
+project-os resume create --objective "Outcome" --first-read AGENTS.md,PROJECT-OS.html --by agent-name
 project-os sprint create --title "Delivery window" --tasks TASK-0001
 project-os run create --title "Implementation attempt" --task TASK-0001
 project-os ui create --title "Surface redesign" --task TASK-0001
 project-os build
 project-os check</code></pre>
-  <p>Do not create parallel task lists, dated status hubs, or hand-maintained generated indexes.</p>
+  <h2>Ownership boundary</h2>
+  <p>Project OS owns project-local records, evidence, projections, migration contracts, and integrity gates. Agent Base owns spawning, model routing, messaging, telemetry, and terminal control. Product-specific credentials and automation remain project-local adapters.</p>
+  <p>Do not create parallel task lists, dated status hubs, duplicate engine-local skills, or hand-maintained generated indexes.</p>
 </main>
-<script type="application/json" id="project-operating-map-state">{"schema_version":2,"project_name":"{{PROJECT_NAME}}","canonical_task_system":".agents/tasks","generated_state":".project-os/generated"}</script>
+<script type="application/json" id="project-operating-map-state">{"schema_version":3,"project_name":"{{PROJECT_NAME}}","canonical_task_system":".agents/tasks","generated_state":".project-os/generated","machine_formats":["json","jsonl"],"human_format":"html","runtime_boundary":"agent-base","adapter_boundary":"project-local"}</script>
 </body>
 </html>
