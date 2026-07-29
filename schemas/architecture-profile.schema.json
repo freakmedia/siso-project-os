@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siso.dev/schemas/project-os/architecture-profile.schema.json",
+  "title": "SISO Project Kit architecture profile",
+  "description": "Project-local orientation, layout, operations, and anti-degradation contract.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "orientation",
+    "layout",
+    "operations",
+    "required_paths",
+    "ratchet"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "orientation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rules_source", "file_tree", "operating_map", "nearest_rules_win"],
+      "properties": {
+        "rules_source": { "const": "AGENTS.md" },
+        "file_tree": { "const": "FILE-TREE.md" },
+        "operating_map": { "const": "PROJECT-OS.md" },
+        "nearest_rules_win": { "const": true }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["axis", "generated_code", "public_surfaces"],
+      "properties": {
+        "axis": { "const": "domain-first" },
+        "generated_code": { "const": "isolated" },
+        "public_surfaces": { "const": "explicit" }
+      }
+    },
+    "operations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "entrypoints"],
+      "properties": {
+        "root": { "const": "script" },
+        "entrypoints": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 5,
+          "items": { "enum": ["bootstrap", "setup", "test", "server", "update"] }
+        }
+      }
+    },
+    "required_paths": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 6,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+      }
+    },
+    "ratchet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline", "policy", "metric_retirement_requires_decision"],
+      "properties": {
+        "baseline": { "const": ".project-os/architecture/baseline.json" },
+        "policy": { "const": "non-regression" },
+        "metric_retirement_requires_decision": { "const": true }
+      }
+    }
+  }
+}

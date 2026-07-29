@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "orientation": {
+    "rules_source": "AGENTS.md",
+    "file_tree": "FILE-TREE.md",
+    "operating_map": "PROJECT-OS.md",
+    "nearest_rules_win": true
+  },
+  "layout": {
+    "axis": "domain-first",
+    "generated_code": "isolated",
+    "public_surfaces": "explicit"
+  },
+  "operations": {
+    "root": "script",
+    "entrypoints": ["bootstrap", "setup", "test", "server", "update"]
+  },
+  "required_paths": [
+    "AGENTS.md",
+    "PROJECT-OS.md",
+    "FILE-TREE.md",
+    ".project-os/project.json",
+    ".agents/tasks",
+    "docs/project-os/ONBOARDING.md",
+    ".uihub/README.md"
+  ],
+  "ratchet": {
+    "baseline": ".project-os/architecture/baseline.json",
+    "policy": "non-regression",
+    "metric_retirement_requires_decision": true
+  }
+}
