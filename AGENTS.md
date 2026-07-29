@@ -5,9 +5,9 @@ protected source project. The source is evidence, never a write target; see `doc
 
 ## Start here
 
-1. `SPEC.md` — scope, contracts, and acceptance criteria.
-2. `README.md` — user-facing adoption path.
-3. `docs/work-lifecycle.md`, `docs/knowledge-spine.html`, and `docs/ui-loop.html` — the three operating packs.
+1. `SPEC.html` — scope, contracts, and acceptance criteria.
+2. `README.html` — user-facing adoption path.
+3. `docs/work-lifecycle.html`, `docs/knowledge-spine.html`, and `docs/ui-loop.html` — the operating packs.
 
 ## Invariants
 

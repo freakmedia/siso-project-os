@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { packageRoot, pathExists } from './shared.mjs'
 
 export const REQUIRED_COVERAGE_AREAS = Object.freeze([
   'boot-routing',
@@ -86,7 +87,9 @@ export function capabilityCoverageProblems(contract) {
 }
 
 export async function readCapabilityCoverage(root) {
-  return JSON.parse(await readFile(join(root, 'docs', 'capability-coverage.json'), 'utf8'))
+  const projectPath = join(root, 'docs', 'capability-coverage.json')
+  const path = await pathExists(projectPath) ? projectPath : join(packageRoot, 'docs', 'capability-coverage.json')
+  return JSON.parse(await readFile(path, 'utf8'))
 }
 
 export function renderCapabilityCoverageHtml(contract) {

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://siso.dev/schemas/project-os/memory.schema.json",
   "title": "SISO Project OS Memory Frontmatter",
-  "description": "Normalized metadata for one durable project fact stored as Markdown.",
+  "description": "Normalized metadata for one durable project fact stored as HTML authority plus machine-readable evidence.",
   "type": "object",
   "additionalProperties": false,
   "required": [

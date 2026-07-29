@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="generator" content="siso-project-os:architecture-v2">
-  <title>{{PROJECT_NAME}} — What Lives Where</title>
+  <title>{{PROJECT_NAME_HTML}} — What Lives Where</title>
   <style>
     :root{color-scheme:light dark;font:16px/1.55 system-ui,sans-serif}body{max-width:72rem;margin:0 auto;padding:2rem;color:#172033;background:#f6f8fb}
     main{background:#fff;border:1px solid #dce2ea;border-radius:1rem;padding:clamp(1rem,3vw,2.5rem);box-shadow:0 1rem 3rem #18203012}h1,h2{line-height:1.15}
@@ -15,7 +15,7 @@
 <body>
 <main data-contract="project-file-tree">
   <p class="meta">Stable first-read map · generated status belongs in <code>.project-os/generated/</code></p>
-  <h1>{{PROJECT_NAME}} — What Lives Where</h1>
+  <h1>{{PROJECT_NAME_HTML}} — What Lives Where</h1>
   <p class="rule">Extend this map when real domains appear. Do not reserve speculative folders or turn this into a volatile status page.</p>
   <table>
     <thead><tr><th>Path</th><th>Ownership contract</th></tr></thead>
@@ -41,6 +41,6 @@
   <h2>Project-specific domains</h2>
   <p>No domains have been declared yet. Add one table row per real domain with its public surface and cheapest verification command.</p>
 </main>
-<script type="application/json" id="project-file-tree-state">{"schema_version":1,"project_name":"{{PROJECT_NAME}}","layout_axis":"domain-first","generated_code":"isolated","public_surfaces":"explicit","domains":[]}</script>
+<script type="application/json" id="project-file-tree-state">{"schema_version":1,"project_name":{{PROJECT_NAME_JSON}},"layout_axis":"domain-first","generated_code":"isolated","public_surfaces":"explicit","domains":[]}</script>
 </body>
 </html>

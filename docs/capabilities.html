@@ -49,11 +49,13 @@
 
     <section id="adoption">
       <h2>Non-destructive adoption</h2>
-      <p><code>planFullProfileAdoption(root)</code> inventories current capabilities and classifies
-        each asset as <code>create</code>, identical <code>retain</code>, or differing
-        <code>preserve</code>. <code>applyFullProfileAdoption(root, options)</code> applies only a
-        collision-free plan with exclusive writes and rollback of files created by a failed attempt.
-        It never rewrites an existing root runtime shim.</p>
+      <p><code>planProjectAdoption(root)</code> inventories the complete architecture, lifecycle,
+        knowledge, capability, UI, schema, and runtime-route profile. It classifies each asset as
+        <code>create</code>, identical <code>retain</code>, thin <code>merge-route</code>, or
+        differing <code>preserve</code>. <code>applyProjectAdoption(root, options)</code> creates only
+        missing assets, appends one bounded route to existing engine shims, preserves every other
+        authority collision, rolls back failed writes, and emits deterministic HTML+JSON migration
+        evidence. The lower-level full-profile APIs remain available for capability-only consumers.</p>
       <p>Claude discovers the canonical skill through root <code>CLAUDE.md</code>; Codex uses root
         <code>AGENTS.md</code>. Both are pointer-only runtime shims.</p>
     </section>
@@ -77,6 +79,8 @@
   doctorProjectCapabilities
 
 src/adoption.mjs:
+  planProjectAdoption
+  applyProjectAdoption
   planFullProfileAdoption
   applyFullProfileAdoption
   scaffoldProjectSkill
@@ -87,7 +91,7 @@ src/adoption.mjs:
     </section>
   </main>
   <script id="capability-guide-contract" type="application/json">
-  {"schema_version":1,"contract":"project-os-capability-guide.v1","canonical_profile":".agents/project-profile.json","operator_discovery_shim":".agents/skills/project-operator/SKILL.md","operator_authority":".agents/skills/project-operator/OPERATOR.html","runtime_shims":{"claude":"CLAUDE.md","codex":"AGENTS.md"},"exports":{"capabilities":["discoverProjectCapabilities","doctorProjectCapabilities"],"adoption":["planFullProfileAdoption","applyFullProfileAdoption","scaffoldProjectSkill","scaffoldProjectAgent","scaffoldProjectCommand"]}}
+  {"schema_version":1,"contract":"project-os-capability-guide.v1","canonical_profile":".agents/project-profile.json","operator_discovery_shim":".agents/skills/project-operator/SKILL.md","operator_authority":".agents/skills/project-operator/OPERATOR.html","runtime_shims":{"claude":"CLAUDE.md","codex":"AGENTS.md"},"exports":{"capabilities":["discoverProjectCapabilities","doctorProjectCapabilities"],"adoption":["planProjectAdoption","applyProjectAdoption","planFullProfileAdoption","applyFullProfileAdoption","scaffoldProjectSkill","scaffoldProjectAgent","scaffoldProjectCommand"]}}
   </script>
 </body>
 </html>

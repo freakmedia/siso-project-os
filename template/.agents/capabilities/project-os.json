@@ -82,7 +82,7 @@
       "ownership": "PROJECT_LOCAL",
       "required": false,
       "description": "Project-authored procedures that remain local and evidence-backed.",
-      "path": "docs/proven-recipes/INDEX.md",
+      "path": "docs/proven-recipes/INDEX.html",
       "provider": null,
       "capability": null,
       "resolution": null,

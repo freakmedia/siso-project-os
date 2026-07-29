@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="generator" content="siso-project-os:operating-map-v3">
-  <title>{{PROJECT_NAME}} — Project Operating Map</title>
+  <title>{{PROJECT_NAME_HTML}} — Project Operating Map</title>
   <style>:root{font:16px/1.55 system-ui,sans-serif;color:#172033;background:#f6f8fb}body{max-width:76rem;margin:auto;padding:2rem}main{background:#fff;padding:2rem;border:1px solid #dce2ea;border-radius:1rem}table{width:100%;border-collapse:collapse}th,td{text-align:left;vertical-align:top;padding:.7rem;border-bottom:1px solid #e3e7ed}code{overflow-wrap:anywhere}pre{white-space:pre-wrap;background:#f2f5f9;padding:1rem;border-radius:.6rem}@media(max-width:42rem){body{padding:.5rem}main{padding:1rem}table,tbody,tr,th,td{display:block}tr{padding:.6rem 0}th,td{border:0;padding:.15rem 0}}@media(prefers-color-scheme:dark){:root{color:#e8edf5;background:#10131a}main{background:#171b24;border-color:#303746}th,td{border-color:#303746}pre{background:#10131a}}</style>
 </head>
 <body>
 <main data-contract="project-operating-map">
-  <h1>{{PROJECT_NAME}} — Project Operating Map</h1>
+  <h1>{{PROJECT_NAME_HTML}} — Project Operating Map</h1>
   <p>One question, one canonical destination. JSON/JSONL is machine state; HTML is the human and agent-readable operating surface. Generated pages are projections, never alternate writers.</p>
   <table>
     <thead><tr><th>Question</th><th>Canonical destination</th></tr></thead>
@@ -44,6 +44,6 @@ project-os check</code></pre>
   <p>Project OS owns project-local records, evidence, projections, migration contracts, and integrity gates. Agent Base owns spawning, model routing, messaging, telemetry, and terminal control. Product-specific credentials and automation remain project-local adapters.</p>
   <p>Do not create parallel task lists, dated status hubs, duplicate engine-local skills, or hand-maintained generated indexes.</p>
 </main>
-<script type="application/json" id="project-operating-map-state">{"schema_version":3,"project_name":"{{PROJECT_NAME}}","canonical_task_system":".agents/tasks","generated_state":".project-os/generated","machine_formats":["json","jsonl"],"human_format":"html","runtime_boundary":"agent-base","adapter_boundary":"project-local"}</script>
+<script type="application/json" id="project-operating-map-state">{"schema_version":3,"project_name":{{PROJECT_NAME_JSON}},"canonical_task_system":".agents/tasks","generated_state":".project-os/generated","machine_formats":["json","jsonl"],"human_format":"html","runtime_boundary":"agent-base","adapter_boundary":"project-local"}</script>
 </body>
 </html>

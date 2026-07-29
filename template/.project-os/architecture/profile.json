@@ -21,8 +21,8 @@
     "FILE-TREE.html",
     ".project-os/project.json",
     ".agents/tasks",
-    "docs/project-os/ONBOARDING.md",
-    ".uihub/README.md"
+    "docs/project-os/ONBOARDING.html",
+    ".uihub/README.html"
   ],
   "ratchet": {
     "baseline": ".project-os/architecture/baseline.json",

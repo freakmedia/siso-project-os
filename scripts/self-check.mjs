@@ -26,10 +26,26 @@ for (const root of [templateRoot, join(packageRoot, 'src')]) {
 
 
 for (const file of await walkFiles(packageRoot)) {
-  if (file === 'docs/provenance.md' || file.startsWith('.git/')) continue
-  if (!/\.(?:md|mjs|json)$/.test(file)) continue
+  if (file.startsWith('.git/')) continue
+  if (!/\.(?:html|md|mjs|json)$/.test(file)) continue
   const content = await readFile(join(packageRoot, file), 'utf8')
   if (/oracle[- ]streaming/i.test(content)) failures.push(`source-project name escaped provenance boundary in ${file}`)
+}
+
+const markdownAllowed = (file) => file === 'AGENTS.md'
+  || file === 'template/AGENTS.md'
+  || file === 'template/CLAUDE.md'
+  || /^template\/\.agents\/skills\/[^/]+\/SKILL\.md$/.test(file)
+for (const file of (await walkFiles(packageRoot)).filter((path) => path.endsWith('.md') && !path.startsWith('.git/'))) {
+  if (!markdownAllowed(file)) failures.push(`unauthorized Markdown authority: ${file}`)
+}
+
+for (const directory of ['docs', 'template/.agents', 'template/.uihub', 'template/docs']) {
+  for (const file of (await walkFiles(join(packageRoot, directory))).filter((path) => path.endsWith('.html'))) {
+    const content = await readFile(join(packageRoot, directory, file), 'utf8')
+    if (!/^<!doctype html>/i.test(content)) failures.push(`HTML authority lacks doctype: ${directory}/${file}`)
+    if (!/type="application\/json"/.test(content)) failures.push(`HTML authority lacks embedded JSON contract: ${directory}/${file}`)
+  }
 }
 
 const documentSchema = JSON.parse(await readFile(join(schemasRoot, 'document.schema.json'), 'utf8'))

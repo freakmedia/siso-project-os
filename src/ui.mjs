@@ -4,7 +4,8 @@ import { join } from 'node:path'
 import { UI_STAGES, isoNow, listDirectories, pathExists, readJson, resolveProjectPointer, splitList, withExclusiveLock, writeJsonAtomic } from './shared.mjs'
 import { assertProjectRecord } from './schema.mjs'
 import { findTask } from './work.mjs'
-import { uiCandidateManifestProblems, uiDecisionCompletenessProblems, uiReceiptLinkProblems, uiReviewResponseProblems, uiTaskEvidenceProblems } from './ui-contracts.mjs'
+import { decisionFromUiReview, uiCandidateManifestProblems, uiDecisionCompletenessProblems, uiReceiptLinkProblems, uiReviewResponseProblems, uiTaskEvidenceProblems } from './ui-contracts.mjs'
+import { writeImmutableJson } from './lifecycle-core.mjs'
 
 function htmlEscape(value) {
   return String(value ?? '').replace(/[&<>"']/g, (character) => ({
@@ -78,6 +79,37 @@ export async function findUiCampaign(root, id) {
   if (!(await listDirectories(base)).includes(id)) throw new Error(`${id} was not found`)
   const path = join(base, id, 'campaign.json')
   return { path, directory: join(base, id), campaign: await readJson(path) }
+}
+
+export async function importUiReviewDecision(root, id, flags = {}) {
+  const entry = await findUiCampaign(root, id)
+  if (entry.campaign.stage !== 'review') throw new Error(`${id} must be at review before importing a decision`)
+  const responsePath = typeof flags.response === 'string' ? flags.response : entry.campaign.review_path
+  const manifest = await readJson(resolveProjectPointer(root, entry.campaign.candidate_manifest))
+  const response = await readJson(resolveProjectPointer(root, responsePath))
+  await assertProjectRecord(root, 'ui-candidate-manifest', manifest)
+  await assertProjectRecord(root, 'ui-review-response', response)
+  const decision = decisionFromUiReview({
+    campaign: entry.campaign,
+    manifest,
+    response,
+    decision_id: flags['decision-id'] ?? flags.decision_id,
+    response_path: responsePath,
+    implementation_target: {
+      surface: typeof flags.surface === 'string' ? flags.surface : entry.campaign.surface,
+      paths: splitList(flags.paths),
+      acceptance: splitList(flags.accept),
+    },
+    approved_at: isoNow(flags),
+    supersedes: typeof flags.supersedes === 'string' ? flags.supersedes : null,
+  })
+  await assertProjectRecord(root, 'ui-decision', decision)
+  const relativePath = typeof flags.decision === 'string'
+    ? flags.decision
+    : `.uihub/campaigns/${id}/decided/decision.json`
+  const target = resolveProjectPointer(root, relativePath)
+  const immutable = await writeImmutableJson(target, decision)
+  return { decision: immutable.value, path: relativePath, created: immutable.created }
 }
 
 export async function advanceUiCampaign(root, id, flags) {

@@ -2,11 +2,15 @@ import { createHash } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import { readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
+import { checkArchitecture } from './architecture.mjs'
 import { UI_STAGES, listDirectories, pathExists, resolveProjectPointer, taskFolderForStatus, walkFiles } from './shared.mjs'
 import { expectedBuild } from './build.mjs'
+import { inspectRunCloseCensus } from './lifecycle.mjs'
+import { capabilityCoverageProblems, readCapabilityCoverage } from './provenance.mjs'
 import { validateSchema } from './schema.mjs'
 import { scanTasks } from './work.mjs'
 import { uiReceiptProblems } from './ui.mjs'
+import { uiCampaignCompletionProblems } from './ui-contracts.mjs'
 
 function add(list, code, message, path = null) {
   list.push({ code, message, ...(path ? { path } : {}) })
@@ -108,6 +112,7 @@ export async function checkProject(root) {
   for (const runId of (await listDirectories(join(root, '.agents', 'runs'))).filter((id) => id.startsWith('RUN-'))) {
     await checkReferenceRecord(root, join('.agents', 'runs', runId, 'run.json'), 'task_ids', taskById, errors, schemas, 'run')
   }
+  await checkLifecycle(root, schemas, errors)
   for (const campaignId of (await listDirectories(join(root, '.uihub', 'campaigns'))).filter((id) => id.startsWith('UI-'))) {
     const relativePath = join('.uihub', 'campaigns', campaignId, 'campaign.json')
     const path = join(root, relativePath)
@@ -175,12 +180,33 @@ export async function checkProject(root) {
           add(errors, 'invalid_direction_json', error.message, directionPath)
         }
       }
+      if (campaign.stage === 'verified' && campaign.candidate_manifest) {
+        for (const problem of await uiCampaignCompletionProblems(root, campaign)) {
+          add(errors, 'incomplete_verified_ui_campaign', problem, relativePath)
+        }
+      }
     } catch (error) {
       add(errors, 'invalid_campaign_json', error.message, relativePath)
     }
   }
 
   await checkKnowledge(root, schemas, taskById, errors)
+
+  try {
+    for (const problem of capabilityCoverageProblems(await readCapabilityCoverage(root))) {
+      add(errors, 'invalid_capability_coverage', problem, 'docs/capability-coverage.json')
+    }
+  } catch (error) {
+    add(errors, 'capability_coverage_check_failed', error.message, 'docs/capability-coverage.json')
+  }
+
+  try {
+    const architecture = await checkArchitecture(root)
+    for (const entry of architecture.errors) add(errors, entry.code, formatStructuredProblem(entry), entry.path)
+    for (const entry of architecture.warnings) add(warnings, entry.code, formatStructuredProblem(entry), entry.path)
+  } catch (error) {
+    add(errors, 'architecture_check_failed', error.message, '.project-os/architecture')
+  }
 
   try {
     const outputs = await expectedBuild(root)
@@ -193,8 +219,112 @@ export async function checkProject(root) {
     add(errors, 'projection_build_failed', error.message, '.project-os/generated')
   }
 
-  if (!(await pathExists(join(root, 'AGENTS.md')))) add(warnings, 'missing_agent_router', 'AGENTS.md is absent; merge .project-os/AGENTS.project-os.md into the canonical rules source if adopting an existing repo')
+  if (!(await pathExists(join(root, 'AGENTS.md')))) add(warnings, 'missing_agent_router', 'AGENTS.md is absent; merge .project-os/AGENTS.project-os.html into the canonical rules source if adopting an existing repo')
   return { ok: errors.length === 0, errors, warnings, counts: { tasks: entries.length, schemas: schemaFiles.length } }
+}
+
+function formatStructuredProblem(problem) {
+  return Object.entries(problem)
+    .filter(([key]) => !['code', 'path'].includes(key))
+    .map(([key, value]) => `${key}=${JSON.stringify(value)}`)
+    .join(', ') || problem.code
+}
+
+async function checkJsonArtifact(root, schemas, errors, relativePath, schemaName) {
+  const path = join(root, relativePath)
+  if (!(await pathExists(path))) {
+    add(errors, 'missing_lifecycle_artifact', `${schemaName} artifact is missing`, relativePath)
+    return null
+  }
+  try {
+    const record = JSON.parse(await readFile(path, 'utf8'))
+    addSchemaErrors(errors, schemas, schemaName, record, relativePath)
+    return record
+  } catch (error) {
+    add(errors, 'invalid_lifecycle_json', error.message, relativePath)
+    return null
+  }
+}
+
+async function checkRunLedger(root, schemas, errors, runId) {
+  const relativePath = `.agents/runs/${runId}/ledger.jsonl`
+  const path = join(root, relativePath)
+  if (!(await pathExists(path))) {
+    add(errors, 'missing_run_ledger', 'run ledger is missing', relativePath)
+    return
+  }
+  const lines = (await readFile(path, 'utf8')).split('\n').filter((line) => line.trim())
+  for (let index = 0; index < lines.length; index += 1) {
+    try {
+      const event = JSON.parse(lines[index])
+      addSchemaErrors(errors, schemas, 'run-event', event, `${relativePath}:${index + 1}`)
+      if (event.run_id !== runId) add(errors, 'run_event_link_mismatch', `event belongs to ${event.run_id}`, `${relativePath}:${index + 1}`)
+      if (event.seq !== index + 1) add(errors, 'run_event_sequence_gap', `expected sequence ${index + 1}, got ${event.seq}`, `${relativePath}:${index + 1}`)
+    } catch (error) {
+      add(errors, 'invalid_run_event_json', error.message, `${relativePath}:${index + 1}`)
+    }
+  }
+}
+
+async function checkLifecycle(root, schemas, errors) {
+  const mappings = [
+    ['.agents/missions', (path) => path.endsWith('/meta.json'), 'mission'],
+    ['.agents/briefs/snapshots', (path) => path.endsWith('.snapshot.json'), 'resume-snapshot'],
+    ['.agents/work-claims/active', (path) => path.endsWith('.json'), 'work-claim'],
+    ['.agents/work-claims/released', (path) => path.endsWith('.json'), 'work-claim'],
+  ]
+  for (const [directory, matches, schemaName] of mappings) {
+    for (const file of (await walkFiles(join(root, directory))).filter(matches)) {
+      await checkJsonArtifact(root, schemas, errors, `${directory}/${file}`, schemaName)
+    }
+  }
+
+  for (const sprintId of (await listDirectories(join(root, '.agents', 'sprints'))).filter((id) => id.startsWith('SPRINT-'))) {
+    const directory = `.agents/sprints/${sprintId}`
+    for (const file of await walkFiles(join(root, directory))) {
+      let schemaName = null
+      if (/^lanes\/[^/]+\/brief\.packet\.json$/.test(file)) schemaName = 'lane-packet'
+      else if (/^lanes\/[^/]+\/state\.json$/.test(file)) schemaName = 'lane-state'
+      else if (/^lanes\/[^/]+\/returns\/[^/]+\.json$/.test(file)) schemaName = 'run-return'
+      else if (/^evidence\/gates\/[^/]+\.json$/.test(file)) schemaName = 'gate-receipt'
+      if (schemaName) await checkJsonArtifact(root, schemas, errors, `${directory}/${file}`, schemaName)
+    }
+  }
+
+  for (const runId of (await listDirectories(join(root, '.agents', 'runs'))).filter((id) => id.startsWith('RUN-'))) {
+    const directory = `.agents/runs/${runId}`
+    let runRecord = null
+    try {
+      runRecord = JSON.parse(await readFile(join(root, directory, 'run.json'), 'utf8'))
+    } catch {}
+    for (const file of await walkFiles(join(root, directory))) {
+      let schemaName = null
+      if (file === 'queue.json') schemaName = 'run-queue'
+      else if (/^briefs\/[^/]+\.json$/.test(file)) schemaName = 'agent-packet'
+      else if (/^returns\/[^/]+\.json$/.test(file)) schemaName = 'run-return'
+      else if (/^attempts\/[^/]+\/attempt-[0-9]+\/attempt\.receipt\.json$/.test(file)) schemaName = 'attempt-receipt'
+      else if (/^attempts\/[^/]+\/attempt-[0-9]+\/verification\.receipt\.json$/.test(file)) schemaName = 'verification-receipt'
+      else if (/^attempts\/[^/]+\/attempt-[0-9]+\/result\.json$/.test(file)) schemaName = 'failure-result'
+      else if (/^evidence\/gates\/[^/]+\.json$/.test(file)) schemaName = 'gate-receipt'
+      if (schemaName) await checkJsonArtifact(root, schemas, errors, `${directory}/${file}`, schemaName)
+    }
+    await checkRunLedger(root, schemas, errors, runId)
+    if (runRecord && ['completed', 'failed', 'cancelled'].includes(runRecord.status)) {
+      try {
+        await inspectRunCloseCensus(root, runId, runRecord.closeout ?? {})
+      } catch (error) {
+        add(errors, 'terminal_run_census_failed', error.message, `${directory}/run.json`)
+      }
+    }
+  }
+
+  for (const deliveryId of (await listDirectories(join(root, '.agents', 'delivery'))).filter((id) => id.startsWith('DELIVERY-'))) {
+    const directory = `.agents/delivery/${deliveryId}`
+    await checkJsonArtifact(root, schemas, errors, `${directory}/plan.json`, 'delivery-plan')
+    if (await pathExists(join(root, directory, 'landing.receipt.json'))) {
+      await checkJsonArtifact(root, schemas, errors, `${directory}/landing.receipt.json`, 'landing-receipt')
+    }
+  }
 }
 
 function addSchemaErrors(errors, schemas, schemaName, value, path) {
@@ -224,17 +354,17 @@ async function checkReferenceRecord(root, relativePath, field, taskById, errors,
 }
 
 async function checkKnowledge(root, schemas, taskById, errors) {
-  const markdownFiles = (await walkFiles(join(root, 'docs'))).filter((file) => file.endsWith('.md'))
+  const authoredFiles = (await walkFiles(join(root, 'docs'))).filter((file) => ['.html', '.md'].some((extension) => file.endsWith(extension)))
   const authorities = new Map()
   const documents = new Map()
-  for (const file of markdownFiles) {
+  for (const file of authoredFiles) {
     const relativePath = `docs/${file}`
     const content = await readFile(join(root, relativePath), 'utf8')
     const match = content.match(/<!-- project-os-meta\s*\n([\s\S]*?)\n-->/)
     if (!match) {
-      add(errors, 'missing_document_metadata', 'durable Markdown lacks project-os-meta JSON', relativePath)
       continue
     }
+    if (file.endsWith('.md')) add(errors, 'legacy_markdown_authority', 'Project OS authority must migrate to deterministic HTML with embedded metadata', relativePath)
     let metadata
     try {
       metadata = JSON.parse(match[1])
@@ -252,7 +382,7 @@ async function checkKnowledge(root, schemas, taskById, errors) {
       if (metadata.canonical_pointer !== relativePath) add(errors, 'invalid_current_pointer', 'current document must point canonically to itself', relativePath)
     }
     if (metadata.status === 'stale' && metadata.canonical_pointer === relativePath) add(errors, 'invalid_stale_pointer', 'stale document cannot point canonically to itself', relativePath)
-    if (relativePath.startsWith('docs/archive/') && relativePath !== 'docs/archive/INDEX.md' && metadata.status === 'current') add(errors, 'current_archive_document', 'archive content cannot be current', relativePath)
+    if (relativePath.startsWith('docs/archive/') && relativePath !== 'docs/archive/INDEX.html' && metadata.status === 'current') add(errors, 'current_archive_document', 'archive content cannot be current', relativePath)
   }
   for (const [key, owners] of authorities) if (owners.length > 1) add(errors, 'duplicate_document_authority', `${key} is current in ${owners.join(', ')}`)
   for (const [relativePath, metadata] of documents) {
@@ -269,7 +399,7 @@ async function checkKnowledge(root, schemas, taskById, errors) {
       const target = documents.get(metadata.canonical_pointer)
       if (!target || target.status !== 'current') add(errors, 'invalid_stale_target', 'stale document must point to a current document', relativePath)
     }
-    if (metadata.status === 'current' && metadata.canonical_pointer?.startsWith('docs/archive/') && relativePath !== 'docs/archive/INDEX.md') add(errors, 'archive_canonical_pointer', 'current authority cannot point into the archive', relativePath)
+    if (metadata.status === 'current' && metadata.canonical_pointer?.startsWith('docs/archive/') && relativePath !== 'docs/archive/INDEX.html') add(errors, 'archive_canonical_pointer', 'current authority cannot point into the archive', relativePath)
   }
 
   const claims = await checkJsonLines(root, 'docs/ledgers/proofs.jsonl', schemas, 'claim', errors)

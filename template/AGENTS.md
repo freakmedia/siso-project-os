@@ -4,6 +4,9 @@
 
 This repository uses SISO Project OS for project-local agent state.
 
+Load `.agents/skills/project-operator/SKILL.md` as the runtime entrypoint; it routes to the
+canonical HTML operating authority without duplicating it here.
+
 ## Start here
 
 1. Read this `AGENTS.md` — binding repository rules.
@@ -14,7 +17,8 @@ This repository uses SISO Project OS for project-local agent state.
 6. Verify, run `project-os check`, and hand off from repository evidence.
 
 Humans can open `.project-os/generated/onboarding.html` for the same delivery map. The knowledge
-spine rules live at `docs/project-os/ONBOARDING.html`; task-linked UI work lives at `.uihub/README.html`.
+spine rules live at `docs/project-os/INDEX.html`; the durable onboarding contract is
+`docs/project-os/ONBOARDING.html`; task-linked UI work lives at `.uihub/README.html`.
 
 ## Runtime and capability boundary
 

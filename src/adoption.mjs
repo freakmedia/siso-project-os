@@ -1,8 +1,8 @@
 import { mkdir, readFile, readdir, unlink, writeFile } from 'node:fs/promises'
-import { dirname, join, resolve } from 'node:path'
+import { basename, dirname, join, resolve } from 'node:path'
 import { discoverProjectCapabilities } from './capabilities.mjs'
 import { validateSchema } from './schema.mjs'
-import { pathExists, schemasRoot, templateRoot } from './shared.mjs'
+import { pathExists, schemasRoot, templateRoot, walkFiles, writeJsonAtomic } from './shared.mjs'
 
 export const FULL_PROFILE_FILES = Object.freeze([
   '.agents/project-profile.json',
@@ -16,6 +16,9 @@ export const FULL_PROFILE_FILES = Object.freeze([
   'CLAUDE.md',
   'docs/project-os/CAPABILITIES.html',
 ])
+
+const RUNTIME_SHIMS = new Set(['AGENTS.md', 'CLAUDE.md'])
+const RUNTIME_MARKER = 'siso-project-os:runtime-route-v1'
 
 async function rootMode(root) {
   if (!(await pathExists(root))) return 'greenfield'
@@ -137,6 +140,163 @@ export async function applyFullProfileAdoption(projectRoot, options = {}) {
     dry_run: false,
     created: created.map((path) => path.slice(root.length + 1)),
     retained: plan.operations.filter((entry) => entry.action === 'retain').map((entry) => entry.path),
+    plan,
+  }
+}
+
+async function projectReplacements(root, options = {}) {
+  let existing = {}
+  const configPath = join(root, '.project-os', 'project.json')
+  if (await pathExists(configPath)) {
+    try {
+      existing = JSON.parse(await readFile(configPath, 'utf8'))
+    } catch {}
+  }
+  const name = typeof options.name === 'string' && options.name.trim() ? options.name.trim() : (existing.project_name ?? basename(root))
+  return {
+    '{{PROJECT_NAME}}': name,
+    '{{PROJECT_NAME_JSON}}': JSON.stringify(name),
+    '{{PROJECT_NAME_HTML}}': htmlEscape(name),
+    '{{PROJECT_SUMMARY_JSON}}': JSON.stringify(typeof options.summary === 'string' ? options.summary.trim() : (existing.project_summary ?? '')),
+    '{{DESIRED_OUTCOME_JSON}}': JSON.stringify(typeof options.outcome === 'string' ? options.outcome.trim() : (existing.desired_outcome ?? '')),
+  }
+}
+
+function renderTemplate(content, replacements) {
+  let rendered = content
+  for (const [token, value] of Object.entries(replacements)) rendered = rendered.split(token).join(value)
+  return rendered
+}
+
+function runtimeRoute(path) {
+  const engine = path === 'CLAUDE.md' ? 'Claude' : 'Agent'
+  return `\n<!-- ${RUNTIME_MARKER}:begin -->\n## SISO Project OS runtime route\n\n${engine} runtime: load \`.agents/skills/project-operator/SKILL.md\`, then follow its canonical HTML authority.\n<!-- ${RUNTIME_MARKER}:end -->\n`
+}
+
+async function projectAdoptionOperations(root, options = {}) {
+  const replacements = await projectReplacements(root, options)
+  const operations = []
+  for (const path of await walkFiles(templateRoot)) {
+    const content = renderTemplate(await readFile(join(templateRoot, path), 'utf8'), replacements)
+    const target = join(root, path)
+    if (!(await pathExists(target))) {
+      operations.push({ action: 'create', path, source: `template/${path}`, content })
+      continue
+    }
+    try {
+      const existing = await readFile(target, 'utf8')
+      if (existing === content) operations.push({ action: 'retain', path, source: `template/${path}`, content })
+      else if (RUNTIME_SHIMS.has(path) && !existing.includes(RUNTIME_MARKER) && !existing.includes('.agents/skills/project-operator/SKILL.md')) {
+        operations.push({ action: 'merge-route', path, source: `template/${path}`, content: `${existing.replace(/\s*$/, '')}${runtimeRoute(path)}`, reason: 'preserve existing rules and append one runtime pointer' })
+      } else if (RUNTIME_SHIMS.has(path) && (existing.includes(RUNTIME_MARKER) || existing.includes('.agents/skills/project-operator/SKILL.md'))) {
+        operations.push({ action: 'retain', path, source: `template/${path}`, content: existing, reason: 'existing runtime route is already present' })
+      } else {
+        operations.push({ action: 'preserve', path, source: `template/${path}`, content, reason: 'target content differs; manual authority decision required' })
+      }
+    } catch (error) {
+      operations.push({ action: 'preserve', path, source: `template/${path}`, content, reason: error instanceof Error ? error.message : String(error) })
+    }
+  }
+  for (const file of await walkFiles(schemasRoot)) {
+    const path = `.project-os/schemas/${file}`
+    const content = await readFile(join(schemasRoot, file), 'utf8')
+    const target = join(root, path)
+    if (!(await pathExists(target))) operations.push({ action: 'create', path, source: `schemas/${file}`, content })
+    else {
+      try {
+        const existing = await readFile(target, 'utf8')
+        operations.push(existing === content
+          ? { action: 'retain', path, source: `schemas/${file}`, content }
+          : { action: 'preserve', path, source: `schemas/${file}`, content, reason: 'installed schema differs; explicit upgrade required' })
+      } catch (error) {
+        operations.push({ action: 'preserve', path, source: `schemas/${file}`, content, reason: error instanceof Error ? error.message : String(error) })
+      }
+    }
+  }
+  return operations.sort((left, right) => left.path.localeCompare(right.path))
+}
+
+async function legacyMarkdown(root) {
+  const allowed = (path) => path === 'AGENTS.md' || path === 'CLAUDE.md' || path.endsWith('/SKILL.md')
+  const files = []
+  for (const directory of ['.agents', '.uihub', 'docs']) {
+    for (const path of await walkFiles(join(root, directory))) files.push(`${directory}/${path}`)
+  }
+  for (const path of ['README.md', 'SPEC.md']) if (await pathExists(join(root, path))) files.push(path)
+  return files.filter((path) => path.endsWith('.md') && !allowed(path)).sort()
+}
+
+function publicAdoptionPlan(root, mode, operations, legacy) {
+  const counts = Object.fromEntries(['create', 'retain', 'merge-route', 'preserve'].map((action) => [action.replace('-', '_'), operations.filter((entry) => entry.action === action).length]))
+  const preserved = operations.filter((entry) => entry.action === 'preserve')
+  return {
+    schema_version: 1,
+    profile: 'complete-siso-project-kit',
+    mode,
+    non_destructive: true,
+    can_apply: true,
+    operational_after_apply: preserved.length === 0 && legacy.length === 0,
+    summary: { ...counts, legacy_markdown: legacy.length },
+    operations: operations.map(({ content, ...entry }) => entry),
+    preserved_collisions: preserved.map(({ content, ...entry }) => entry),
+    legacy_markdown: legacy,
+    next_actions: [
+      ...(preserved.length > 0 ? [{ action: 'resolve-preserved-authorities', status: 'required', paths: preserved.map((entry) => entry.path) }] : []),
+      ...(legacy.length > 0 ? [{ action: 'migrate-project-os-markdown-to-html', status: 'required', paths: legacy }] : []),
+      { action: 'doctor', status: 'required', command: 'project-os doctor --agent-base-root /path/to/SISO_Agent_Base --json' },
+      { action: 'check', status: 'required', command: 'project-os check --json' },
+    ],
+  }
+}
+
+export async function planProjectAdoption(projectRoot, options = {}) {
+  const root = resolve(projectRoot)
+  return publicAdoptionPlan(root, await rootMode(root), await projectAdoptionOperations(root, options), await legacyMarkdown(root))
+}
+
+function renderMigrationHtml(plan) {
+  const rows = plan.operations.map((entry) => `<tr><td>${htmlEscape(entry.action)}</td><td><code>${htmlEscape(entry.path)}</code></td><td>${htmlEscape(entry.reason ?? '')}</td></tr>`).join('')
+  const state = embeddedJson(plan)
+  return `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SISO Project Kit migration</title><style>body{font:15px/1.5 system-ui;max-width:76rem;margin:auto;padding:2rem}table{border-collapse:collapse;width:100%}th,td{padding:.6rem;border-bottom:1px solid #ccd4df;text-align:left;vertical-align:top}code{overflow-wrap:anywhere}@media(max-width:42rem){body{padding:.5rem}table,tbody,tr,th,td{display:block}th,td{border:0;padding:.15rem 0}tr{padding:.7rem 0}}</style></head><body><main data-contract="project-kit-migration"><h1>SISO Project Kit migration</h1><p>${plan.operational_after_apply ? 'No unresolved Project OS authority conflicts remain.' : 'Review the preserved authorities and legacy surfaces below before declaring the migration complete.'}</p><table><thead><tr><th>Action</th><th>Path</th><th>Reason</th></tr></thead><tbody>${rows}</tbody></table></main><script id="project-kit-migration-state" type="application/json">${state}</script></body></html>\n`
+}
+
+export async function applyProjectAdoption(projectRoot, options = {}) {
+  const root = resolve(projectRoot)
+  const operations = await projectAdoptionOperations(root, options)
+  const legacy = await legacyMarkdown(root)
+  const plan = publicAdoptionPlan(root, await rootMode(root), operations, legacy)
+  if (options.dryRun) return { ok: true, dry_run: true, plan, created: [], merged_routes: [] }
+  const created = []
+  const modified = []
+  try {
+    await mkdir(root, { recursive: true })
+    for (const operation of operations) {
+      const target = join(root, operation.path)
+      if (operation.action === 'create') {
+        await mkdir(dirname(target), { recursive: true })
+        await writeFile(target, operation.content, { encoding: 'utf8', flag: 'wx' })
+        created.push(target)
+      } else if (operation.action === 'merge-route') {
+        modified.push({ target, content: await readFile(target, 'utf8') })
+        await writeFile(target, operation.content, 'utf8')
+      }
+    }
+    const reportRoot = join(root, '.project-os', 'migration')
+    await mkdir(reportRoot, { recursive: true })
+    await writeJsonAtomic(join(reportRoot, 'project-kit-migration.json'), plan)
+    await writeFile(join(reportRoot, 'project-kit-migration.html'), renderMigrationHtml(plan), 'utf8')
+  } catch (error) {
+    for (const path of created.reverse()) await unlink(path).catch(() => {})
+    for (const entry of modified.reverse()) await writeFile(entry.target, entry.content, 'utf8').catch(() => {})
+    throw error
+  }
+  return {
+    ok: true,
+    dry_run: false,
+    created: created.map((path) => path.slice(root.length + 1)),
+    merged_routes: operations.filter((entry) => entry.action === 'merge-route').map((entry) => entry.path),
+    preserved: operations.filter((entry) => entry.action === 'preserve').map((entry) => entry.path),
+    report: '.project-os/migration/project-kit-migration.html',
     plan,
   }
 }

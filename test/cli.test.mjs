@@ -176,7 +176,7 @@ test('init preserves existing AGENTS.md and stages the merge contract', async (t
   await writeFile(join(root, 'AGENTS.md'), '# Existing rules\n', 'utf8')
   run(['init', root, '--name', 'Adopted'])
   assert.equal(await readFile(join(root, 'AGENTS.md'), 'utf8'), '# Existing rules\n')
-  assert.match(await readFile(join(root, '.project-os', 'AGENTS.project-os.md'), 'utf8'), /Adopted/)
+  assert.match(await readFile(join(root, '.project-os', 'AGENTS.project-os.html'), 'utf8'), /Adopted/)
 })
 
 test('task completion fails closed without verification receipts', async (t) => {
